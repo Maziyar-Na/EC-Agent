@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include "Handler.h"
 
-uint64_t ec_agent::Handler::handle_mem_req(ec_reclaim_msg_t* req) {
+uint64_t ec::agent::Handler::handle_mem_req(ec_reclaim_msg* req) {
     uint64_t ret = 0, avail_mem = 0;
     //for ( count = 0; count < req -> num_of_cgroups; ++count)
     //{
@@ -20,11 +20,11 @@ uint64_t ec_agent::Handler::handle_mem_req(ec_reclaim_msg_t* req) {
 }
 
 //Helper function to handle request
-uint64_t  ec_agent::Handler::handle_request(char* buff){
+uint64_t ec::agent::Handler::handle_request(char* buff){
 
     uint64_t ret = 0;
-    ec_reclaim_msg_t* req = new ec_reclaim_msg_t;
-    req = (ec_reclaim_msg_t*)buff;
+    auto *req = new ec_reclaim_msg;
+    req = (ec_reclaim_msg*)buff;
 
     switch (req -> is_mem) {
         case TRUE:
@@ -41,7 +41,7 @@ uint64_t  ec_agent::Handler::handle_request(char* buff){
     return ret;
 }
 
-void ec_agent::Handler::run(int64_t clifd) {
+void ec::agent::Handler::run(int64_t clifd) {
     char buff[__BUFFSIZE__];
     int64_t bytes_read;
     bzero(buff, __BUFFSIZE__);
@@ -61,10 +61,10 @@ void ec_agent::Handler::run(int64_t clifd) {
     pthread_exit(NULL);
 }
 
-void* ec_agent::Handler::run_handler(void* server_args)
+void* ec::agent::Handler::run_handler(void* server_args)
 {
     cout << "[dbg] run_handler: thread executed!" << endl;
-    serv_thread_args_t* args = static_cast<serv_thread_args_t*>(server_args);
+    auto *args = static_cast<serv_thread_args*>(server_args);
     args->req_handler->run(args->clifd);
-    return NULL;
+    return nullptr;
 }

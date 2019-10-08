@@ -15,40 +15,35 @@
 
 using namespace std;
 
-namespace ec_agent {
+namespace ec {
+    namespace agent {
 
-    typedef struct ec_reclaim_msg {
+        struct ec_reclaim_msg {
+            uint16_t cgroup_id;
+            uint32_t is_mem;
+            //...maybe it needs more things
+        };
 
-        uint16_t cgroup_id;
+        class Handler {
 
-        uint32_t is_mem;
+        public:
 
-        //...maybe it needs more things
+            void run(int64_t clifd);
 
-    } ec_reclaim_msg_t;
+            static void *run_handler(void *server_args);
 
-    class Handler {
+        private:
+            uint64_t handle_request(char *buff);
 
-    public:
+            uint64_t handle_mem_req(ec_reclaim_msg *req);
 
-        void run(int64_t clifd);
+        };
 
-        static void* run_handler(void* server_args);
-
-    private:
-        uint64_t  handle_request(char* buff);
-
-        uint64_t handle_mem_req(ec_reclaim_msg_t* req);
-
-    };
-
-    typedef struct serv_thread_args
-    {
-        int64_t clifd;
-
-        Handler* req_handler;
-
-    } serv_thread_args_t;
+        struct serv_thread_args {
+            int64_t clifd;
+            Handler *req_handler;
+        };
+    }
 }
 
 

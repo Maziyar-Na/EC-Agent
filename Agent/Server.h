@@ -12,41 +12,47 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include "Handler.h"
+#include <sys/select.h>
 
 
 #define _MAXGCMNO_ 30
 
 using namespace std;
 
-namespace ec_agent{
+namespace ec {
+    namespace agent {
 
-    typedef struct ec_agent {
+        typedef struct ec_agent {
 
-        int64_t sockfd;
+            int64_t sockfd;
 
-        struct sockaddr_in addr;
+            struct sockaddr_in addr;
 
-    } ec_agent_t;
+        } ec_agent_t;
 
-    class Server {
+        class Server {
 
-    public:
-        Server(uint16_t _port);
+        public:
+            explicit Server(uint16_t _port);
 
-        void init_agent_server();
+            void init_agent_server();
 
-        void run();
-    private:
-        uint16_t port;
+            void run();
 
-        ec_agent_t* _ec_agent;
+        private:
+            uint16_t port;
 
-        bool is_avail;
+            ec_agent_t *_ec_agent;
 
-        //Handler* req_handler;
-    };
+            bool is_avail;
 
+            //Handler* req_handler;
+        };
+
+    }
 }
 
 
