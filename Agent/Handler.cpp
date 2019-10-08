@@ -11,6 +11,8 @@ uint64_t ec::agent::Handler::handle_mem_req(ec_reclaim_msg* req) {
     uint64_t ret = 0, avail_mem = 0;
     //for ( count = 0; count < req -> num_of_cgroups; ++count)
     //{
+
+    std::cout << "cgroup_id: " << req->cgroup_id << std::endl;
     ret = syscall(__NR_SYSCALL__, req->cgroup_id, false);
 
     cout << "[INFO] EC Agent: Reclaimed memory is: " << ret << endl;
