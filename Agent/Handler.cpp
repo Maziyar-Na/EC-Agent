@@ -11,6 +11,8 @@ uint64_t ec_agent::Handler::handle_mem_req(ec_msg_t* req) {
     uint64_t ret = 0, avail_mem = 0;
     //for ( count = 0; count < req -> num_of_cgroups; ++count)
     //{
+
+    std::cout << "cgroup_id: " << req->cgroup_id << std::endl;
     ret = syscall(__NR_SYSCALL__, req->cgroup_id, false);
 
     cout << "[INFO] EC Agent: Reclaimed memory is: " << ret << endl;
@@ -120,7 +122,7 @@ ec_agent::ec_msg_t* ec_agent::Handler::handle_request(char* buff){
     return res;
 }
 
-void ec_agent::Handler::run(int64_t clifd) {
+void ec::agent::Handler::run(int64_t clifd) {
     char buff[__BUFFSIZE__];
     int64_t bytes_read;
     bzero(buff, __BUFFSIZE__);
@@ -138,10 +140,10 @@ void ec_agent::Handler::run(int64_t clifd) {
     pthread_exit(NULL);
 }
 
-void* ec_agent::Handler::run_handler(void* server_args)
+void* ec::agent::Handler::run_handler(void* server_args)
 {
     cout << "[dbg] run_handler: thread executed!" << endl;
-    serv_thread_args_t* args = static_cast<serv_thread_args_t*>(server_args);
+    auto *args = static_cast<serv_thread_args*>(server_args);
     args->req_handler->run(args->clifd);
     return NULL;
 }

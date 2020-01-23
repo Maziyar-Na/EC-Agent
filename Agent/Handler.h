@@ -24,7 +24,8 @@
 
 using namespace std;
 
-namespace ec_agent {
+namespace ec {
+    namespace agent {
 
     typedef struct ec_msg {
         om::net::ip4_addr client_ip;
@@ -35,15 +36,16 @@ namespace ec_agent {
         uint64_t runtime_remaining;
         uint64_t cont_name;
 
-        //...maybe it needs more things
+            void run(int64_t clifd);
 
     } ec_msg_t;
 
-    class Handler {
+        private:
+            uint64_t handle_request(char *buff);
 
-    public:
+            uint64_t handle_mem_req(ec_reclaim_msg *req);
 
-        void run(int64_t clifd);
+        };
 
         static void* run_handler(void* server_args);
 
