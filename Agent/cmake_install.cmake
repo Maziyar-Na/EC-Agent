@@ -1,4 +1,4 @@
-# Install script for directory: /mnt/ECKernel/EC-Agent/Agent
+# Install script for directory: /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/mnt/ECKernel/EC-Agent/Agent/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

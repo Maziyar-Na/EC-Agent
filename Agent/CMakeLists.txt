@@ -4,4 +4,4 @@ project(Agent)
 set(CMAKE_CXX_STANDARD 14)
 SET(CMAKE_CXX_FLAGS -pthread)
 
-add_executable(Agent Handler.cpp Handler.h Server.cpp Server.h main.cpp)
+add_executable(Agent Handler.cpp Handler.h Server.cpp Server.h om.h main.cpp)

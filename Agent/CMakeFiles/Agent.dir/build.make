@@ -43,10 +43,10 @@ RM = /usr/local/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /mnt/ECKernel/EC-Agent/Agent
+CMAKE_SOURCE_DIR = /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /mnt/ECKernel/EC-Agent/Agent
+CMAKE_BINARY_DIR = /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent
 
 # Include any dependencies generated for this target.
 include CMakeFiles/Agent.dir/depend.make
@@ -59,42 +59,42 @@ include CMakeFiles/Agent.dir/flags.make
 
 CMakeFiles/Agent.dir/Handler.cpp.o: CMakeFiles/Agent.dir/flags.make
 CMakeFiles/Agent.dir/Handler.cpp.o: Handler.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/ECKernel/EC-Agent/Agent/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/Agent.dir/Handler.cpp.o"
-	/usr/bin/g++-5  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Agent.dir/Handler.cpp.o -c /mnt/ECKernel/EC-Agent/Agent/Handler.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/Agent.dir/Handler.cpp.o"
+	/usr/bin/g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Agent.dir/Handler.cpp.o -c /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/Handler.cpp
 
 CMakeFiles/Agent.dir/Handler.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Agent.dir/Handler.cpp.i"
-	/usr/bin/g++-5 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/ECKernel/EC-Agent/Agent/Handler.cpp > CMakeFiles/Agent.dir/Handler.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/Handler.cpp > CMakeFiles/Agent.dir/Handler.cpp.i
 
 CMakeFiles/Agent.dir/Handler.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Agent.dir/Handler.cpp.s"
-	/usr/bin/g++-5 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/ECKernel/EC-Agent/Agent/Handler.cpp -o CMakeFiles/Agent.dir/Handler.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/Handler.cpp -o CMakeFiles/Agent.dir/Handler.cpp.s
 
 CMakeFiles/Agent.dir/Server.cpp.o: CMakeFiles/Agent.dir/flags.make
 CMakeFiles/Agent.dir/Server.cpp.o: Server.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/ECKernel/EC-Agent/Agent/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/Agent.dir/Server.cpp.o"
-	/usr/bin/g++-5  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Agent.dir/Server.cpp.o -c /mnt/ECKernel/EC-Agent/Agent/Server.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/Agent.dir/Server.cpp.o"
+	/usr/bin/g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Agent.dir/Server.cpp.o -c /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/Server.cpp
 
 CMakeFiles/Agent.dir/Server.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Agent.dir/Server.cpp.i"
-	/usr/bin/g++-5 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/ECKernel/EC-Agent/Agent/Server.cpp > CMakeFiles/Agent.dir/Server.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/Server.cpp > CMakeFiles/Agent.dir/Server.cpp.i
 
 CMakeFiles/Agent.dir/Server.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Agent.dir/Server.cpp.s"
-	/usr/bin/g++-5 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/ECKernel/EC-Agent/Agent/Server.cpp -o CMakeFiles/Agent.dir/Server.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/Server.cpp -o CMakeFiles/Agent.dir/Server.cpp.s
 
 CMakeFiles/Agent.dir/main.cpp.o: CMakeFiles/Agent.dir/flags.make
 CMakeFiles/Agent.dir/main.cpp.o: main.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/ECKernel/EC-Agent/Agent/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/Agent.dir/main.cpp.o"
-	/usr/bin/g++-5  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Agent.dir/main.cpp.o -c /mnt/ECKernel/EC-Agent/Agent/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/Agent.dir/main.cpp.o"
+	/usr/bin/g++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/Agent.dir/main.cpp.o -c /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/main.cpp
 
 CMakeFiles/Agent.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/Agent.dir/main.cpp.i"
-	/usr/bin/g++-5 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/ECKernel/EC-Agent/Agent/main.cpp > CMakeFiles/Agent.dir/main.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/main.cpp > CMakeFiles/Agent.dir/main.cpp.i
 
 CMakeFiles/Agent.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/Agent.dir/main.cpp.s"
-	/usr/bin/g++-5 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/ECKernel/EC-Agent/Agent/main.cpp -o CMakeFiles/Agent.dir/main.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/main.cpp -o CMakeFiles/Agent.dir/main.cpp.s
 
 # Object files for target Agent
 Agent_OBJECTS = \
@@ -110,7 +110,7 @@ Agent: CMakeFiles/Agent.dir/Server.cpp.o
 Agent: CMakeFiles/Agent.dir/main.cpp.o
 Agent: CMakeFiles/Agent.dir/build.make
 Agent: CMakeFiles/Agent.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/mnt/ECKernel/EC-Agent/Agent/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable Agent"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable Agent"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Agent.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -123,6 +123,6 @@ CMakeFiles/Agent.dir/clean:
 .PHONY : CMakeFiles/Agent.dir/clean
 
 CMakeFiles/Agent.dir/depend:
-	cd /mnt/ECKernel/EC-Agent/Agent && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /mnt/ECKernel/EC-Agent/Agent /mnt/ECKernel/EC-Agent/Agent /mnt/ECKernel/EC-Agent/Agent /mnt/ECKernel/EC-Agent/Agent /mnt/ECKernel/EC-Agent/Agent/CMakeFiles/Agent.dir/DependInfo.cmake --color=$(COLOR)
+	cd /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent /mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/CMakeFiles/Agent.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/Agent.dir/depend
 
