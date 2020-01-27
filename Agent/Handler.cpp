@@ -2,12 +2,10 @@
 // Created by maaz on 9/25/19.
 //
 
-
-
 #include <unistd.h>
 #include "Handler.h"
 
-uint64_t ec_agent::Handler::handle_mem_req(ec_msg_t* req) {
+uint64_t ec::agent::Handler::handle_mem_req(ec_msg_t* req) {
     uint64_t ret = 0, avail_mem = 0;
     //for ( count = 0; count < req -> num_of_cgroups; ++count)
     //{
@@ -21,7 +19,7 @@ uint64_t ec_agent::Handler::handle_mem_req(ec_msg_t* req) {
     return avail_mem;
 }
 
-uint64_t ec_agent::Handler::connect_container(ec_msg_t* req) {
+uint64_t ec::agent::Handler::connect_container(ec_msg_t* req) {
     std::cout << "connect_container here..." << std::endl;
     // std::cout << "Container name: " << req->cont_name << std::endl;
     // std::cout << "request type: " << std::to_string(req->req_type) << std::endl;
@@ -38,16 +36,20 @@ uint64_t ec_agent::Handler::connect_container(ec_msg_t* req) {
     strcat(cmd,"k8s_");
     strcat(cmd, cont_name_cstring); 
     strcat(cmd," | awk '{print $1,$3}'");
+    std::cout << "docker cmd: " << cmd << std::endl;
+    // Puzzle here: what is the best way to wait for the container to be created? I might be sending stuff
+    // to agent too quickly here..
+    sleep(2);
     std::string container_id = exec(cmd);
     // This is the where we can confirm whether the container was successfully created and deployed
     std::cout << "[dbg]: " << container_id << std::endl;
     if (container_id.size() == 0) {
-        std::cout << "[dbg]: Error in starting container with name:" << cont_name_string << std::endl;
+        std::cout << "[dbg]: No container found with name:" << cont_name_string << std::endl;
         return 1;
     }
     size_t pos = container_id.find(" ");    
     container_id = container_id.substr(0, pos);
-    std::cout << container_id << std::endl;
+    std::cout << "[dbg] Docker Container ID: " << container_id << std::endl;
     
     // Get the PID of the container to call sys_connect with..
     char cmd_pid[100] = "sudo docker inspect --format '{{ .State.Pid }}' ";
@@ -86,7 +88,7 @@ uint64_t ec_agent::Handler::connect_container(ec_msg_t* req) {
 }
 
 //Helper function to handle request
-ec_agent::ec_msg_t* ec_agent::Handler::handle_request(char* buff){
+ec::agent::ec_msg_t* ec::agent::Handler::handle_request(char* buff){
 
     uint64_t ret = 0;
     ec_msg_t* req;
@@ -132,7 +134,7 @@ void ec::agent::Handler::run(int64_t clifd) {
 
         res = handle_request(buff);
 
-        //std::cout << "Response msg: (client ip, msg_typ, rsrc_amnt) " << res->client_ip << "," << res->req_type << ", " << res->rsrc_amnt << std::endl;
+        std::cout << "Container Status: 0=success, 1=fail" << res->rsrc_amnt << std::endl;
         if (write(clifd, (char*) res, sizeof(*res)) < 0)
             cout <<"[ERROR] writing to socket connection (Agent -> GCM) Failed! " << endl;
     }
@@ -148,7 +150,7 @@ void* ec::agent::Handler::run_handler(void* server_args)
     return NULL;
 }
 
-std::string ec_agent::Handler::exec(const char* cmd) {
+std::string ec::agent::Handler::exec(const char* cmd) {
     char buffer[128];
     std::string result = "";
     FILE* pipe = popen(cmd, "r");
