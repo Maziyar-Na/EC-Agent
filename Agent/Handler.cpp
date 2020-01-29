@@ -91,15 +91,16 @@ uint64_t ec::agent::Handler::connect_container(ec_msg_t* req) {
     // i.e a different port number corresponds to a different distributed container
     strcat(cmd_sysconnect, " 4444"); 
     // Debugging purposes
-    //std::cout << "sysconnect command: " << cmd_sysconnect << "" << std::endl;
+
+    std::cout << "sysconnect command: " << cmd_sysconnect << "" << std::endl;
 
     std::string sys_connect_output = exec(cmd_sysconnect);
     // Finally, this is the case for when sys_connect fails.. another source for error
-    if (sys_connect_output == "-1") {
-        std::cout << "[dbg]: Error in calling sys_connect for container with name:" << cont_name_string << std::endl;
-        return 1;
-    }
-    std::cout << "sysconnect output: " << sys_connect_output << "" << std::endl;
+    // if (sys_connect_output == "-1") {
+    //     std::cout << "[dbg]: Error in calling sys_connect for container with name:" << cont_name_string << std::endl;
+    //     return 1;
+    // }
+    std::cout << "[DEBUG]: SYS_CONNECT output: " << sys_connect_output << "" << std::endl;
     return 0;
 }
 
