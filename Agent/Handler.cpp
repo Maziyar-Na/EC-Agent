@@ -20,15 +20,31 @@ uint64_t ec::agent::Handler::handle_mem_req(ec_msg_t* req) {
 }
 
 uint64_t ec::agent::Handler::connect_container(ec_msg_t* req) {
-    std::cout << "connect_container here..." << std::endl;
-    // std::cout << "Container name: " << req->cont_name << std::endl;
+    std::cout << "[dbg] In connect_container: " << std::endl;
+    std::cout << "Container name: " << std::to_string(req->cont_name) << std::endl;
+    
     // std::cout << "request type: " << std::to_string(req->req_type) << std::endl;
     // std::cout << "request ip: " << std::to_string(req->client_ip) << std::endl;
     // std::cout << "cgroup id: " << std::to_string(req->cgroup_id) << std::endl;
     // std::cout << "req_type: " << std::to_string(req->req_type) << std::endl;
-    // std::cout << "rsrc_amnt: " << std::to_string(req->rsrc_amnt) << std::endl;
+    std::cout << "Image Type: " << std::to_string(req->runtime_remaining) << std::endl;
     // std::cout << "request request/response: " << std::to_string(req->request) << std::endl;
+    
+    // Again, This needs to be changed when we implement sending strings across in the correct way, this is an awful way
+    // to pass the image and container name
+    std::string image_name_type = std::to_string(req->runtime_remaining);
+    std::string image_name;
+    if (image_name_type == "1") {
+        image_name = "nginx";
+    } else if (image_name_type == "2"){
+        image_name = "redis";
+    } else {
+        image_name = "nginx";
+    }
+
     std::string cont_name_string = std::to_string(req->cont_name);
+    // This is the format of the name that the pod created the container on the GCM master node..
+    cont_name_string = cont_name_string + "-" + image_name;
     char cont_name_cstring[cont_name_string.size() + 1];
     strcpy(cont_name_cstring, cont_name_string.c_str());
 
@@ -134,7 +150,7 @@ void ec::agent::Handler::run(int64_t clifd) {
 
         res = handle_request(buff);
 
-        std::cout << "Container Status: 0=success, 1=fail" << res->rsrc_amnt << std::endl;
+        std::cout << "Container Status: (0=success, 1=fail)... " << res->rsrc_amnt << std::endl;
         if (write(clifd, (char*) res, sizeof(*res)) < 0)
             cout <<"[ERROR] writing to socket connection (Agent -> GCM) Failed! " << endl;
     }
