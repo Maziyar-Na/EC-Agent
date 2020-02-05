@@ -55,7 +55,7 @@ uint64_t ec::agent::Handler::connect_container(ec_msg_t* req) {
     std::cout << "docker cmd: " << cmd << std::endl;
     // Puzzle here: what is the best way to wait for the container to be created? I might be sending stuff
     // to agent too quickly here..
-    sleep(2);
+    sleep(5);
     std::string container_id = exec(cmd);
     // This is the where we can confirm whether the container was successfully created and deployed
     std::cout << "[dbg]: " << container_id << std::endl;
