@@ -16,6 +16,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
+  "/mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/proto/CMakeFiles/proto.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.

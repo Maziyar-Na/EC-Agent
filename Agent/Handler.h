@@ -14,7 +14,12 @@
 #include <string>
 #include <array>
 #include "om.h"
-#define __BUFFSIZE__ 128
+#include "proto/msg.pb.h"
+
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+
+#define __BUFFSIZE__ 2048
 #define _CPU_ 0
 #define _MEM_ 1
 #define _INIT_ 2
@@ -23,6 +28,8 @@
 #define __NR_SYSCALL__ 336
 
 using namespace std;
+using namespace google::protobuf::io;
+
 
 namespace ec {
     namespace agent {
@@ -49,13 +56,15 @@ namespace ec {
 
 
             private:
-                ec_msg_t* handle_request(char* buff);
+                char* handle_request(char* buff);
                 
-                uint64_t handle_mem_req(ec_msg_t* req);
+                uint64_t handle_mem_req(uint64_t cgroup_id);
 
-                uint64_t connect_container(ec_msg_t* req);
+                uint64_t connect_container(string server_ip, string container_name);
 
-                std::string exec(const char* cmd);
+                std::string exec(string command);
+
+                google::protobuf::uint32 readHdr(char *buf);
 
         };
 
