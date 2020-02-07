@@ -123,6 +123,19 @@ Agent/fast:
 	$(MAKE) -f CMakeFiles/Agent.dir/build.make CMakeFiles/Agent.dir/build
 .PHONY : Agent/fast
 
+#=============================================================================
+# Target rules for targets named proto
+
+# Build rule for target.
+proto: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 proto
+.PHONY : proto
+
+# fast build rule for target.
+proto/fast:
+	$(MAKE) -f proto/CMakeFiles/proto.dir/build.make proto/CMakeFiles/proto.dir/build
+.PHONY : proto/fast
+
 Handler.o: Handler.cpp.o
 
 .PHONY : Handler.o
@@ -213,6 +226,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... Agent"
+	@echo "... proto"
 	@echo "... Handler.o"
 	@echo "... Handler.i"
 	@echo "... Handler.s"

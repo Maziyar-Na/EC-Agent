@@ -109,6 +109,8 @@ Agent: CMakeFiles/Agent.dir/Handler.cpp.o
 Agent: CMakeFiles/Agent.dir/Server.cpp.o
 Agent: CMakeFiles/Agent.dir/main.cpp.o
 Agent: CMakeFiles/Agent.dir/build.make
+Agent: proto/libproto.a
+Agent: /usr/local/lib/libprotobuf.so
 Agent: CMakeFiles/Agent.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/mnt/ECKernel/EC-4.20.16/EC-Agent/Agent/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable Agent"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Agent.dir/link.txt --verbose=$(VERBOSE)
