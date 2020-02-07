@@ -53,7 +53,7 @@ uint64_t ec::agent::Handler::connect_container(string server_ip, string containe
     string output = exec(cmd);
 
     if (output.find("ERROR") != std::string::npos) {
-        std::cout << "[dbg]: Error in calling sys_connect for container with name:" << cont_name_string << std::endl;
+        std::cout << "[dbg]: Error in calling sys_connect for container with name:" << container_name << std::endl;
         return (uint64_t) -1;
     }
     
