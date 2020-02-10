@@ -20,6 +20,7 @@
 #define _INIT_ 2
 #define _SLICE_ 3
 #define _CONNECT_ 4
+#define _MEM_LIMIT_ 5
 #define __NR_SYSCALL__ 336
 
 using namespace std;
@@ -55,7 +56,7 @@ namespace ec {
 
                 uint64_t connect_container(ec_msg_t* req);
 
-                std::string exec(const char* cmd);
+                std::string exec(std::string cmd);
 
         };
 

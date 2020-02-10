@@ -48,16 +48,15 @@ uint64_t ec::agent::Handler::connect_container(ec_msg_t* req) {
     char cont_name_cstring[cont_name_string.size() + 1];
     strcpy(cont_name_cstring, cont_name_string.c_str());
 
-    char cmd[100] = "sudo docker ps -a | grep ";
-    strcat(cmd,"k8s_");
-    strcat(cmd, cont_name_cstring); 
-    strcat(cmd," | awk '{print $1,$3}'");
+    std::string cmd = "sudo docker ps -a | grep ";
+    cmd = cmd + "k8s_" + cont_name_cstring + " | awk '{print $1,$3}'";
     std::cout << "docker cmd: " << cmd << std::endl;
     // Puzzle here: what is the best way to wait for the container to be created? I might be sending stuff
     // to agent too quickly here..
-    sleep(2);
+    sleep(5);
     std::string container_id = exec(cmd);
     // This is the where we can confirm whether the container was successfully created and deployed
+    std::cout << "[should not hang]: " << std::endl;
     std::cout << "[dbg]: " << container_id << std::endl;
     if (container_id.size() == 0) {
         std::cout << "[dbg]: No container found with name:" << cont_name_string << std::endl;
@@ -68,8 +67,7 @@ uint64_t ec::agent::Handler::connect_container(ec_msg_t* req) {
     std::cout << "[dbg] Docker Container ID: " << container_id << std::endl;
     
     // Get the PID of the container to call sys_connect with..
-    char cmd_pid[100] = "sudo docker inspect --format '{{ .State.Pid }}' ";
-    strcat(cmd_pid, container_id.c_str());
+    std::string cmd_pid = "sudo docker inspect --format '{{ .State.Pid }}' " + container_id;
     std::string pid_string = exec(cmd_pid);
     // every container created should have a PID but in the case that it hasn't started, it won't have one. This is another error
     if (pid_string.size() == 0) {
@@ -80,16 +78,13 @@ uint64_t ec::agent::Handler::connect_container(ec_msg_t* req) {
     pid_string = pid_string.substr(pos + 1, pid_string.size()-1);
     //std::cout << pid_string << std::endl;
 
-    char cmd_sysconnect[100] = "../../ec_syscalls/sys_connect ";
+    std::string cmd_sysconnect = "./../../../ec_syscalls/sys_connect ";
+
     std::string ip_address_string = req->client_ip.to_string();
-    char ip_address_cstring[ip_address_string.size() + 1];
-    strcpy(ip_address_cstring, ip_address_string.c_str());
-    strcat(cmd_sysconnect, ip_address_cstring);
-    strcat(cmd_sysconnect, " ");
-    strcat(cmd_sysconnect, pid_string.c_str());
+    cmd_sysconnect += ip_address_string + " " + pid_string + " 4444";
+
     // Todo: This needs to change and needs to be passed in from the GCM. 
     // i.e a different port number corresponds to a different distributed container
-    strcat(cmd_sysconnect, " 4444"); 
     // Debugging purposes
 
     std::cout << "sysconnect command: " << cmd_sysconnect << "" << std::endl;
@@ -135,6 +130,10 @@ ec::agent::ec_msg_t* ec::agent::Handler::handle_request(char* buff){
             res->request = 0;
             res->rsrc_amnt = ret;
             break;
+        case _MEM_LIMIT_:
+            ret = 2061374;//TODO: temporary. for testing purpose. we need a syscall to extract mem limit based on cgroup id
+            res->rsrc_amnt = ret;
+            break;
         default:
             cerr << "[ERROR] Not going in the right way! request type is invalid!" << endl;
     }
@@ -167,13 +166,14 @@ void* ec::agent::Handler::run_handler(void* server_args)
     return NULL;
 }
 
-std::string ec::agent::Handler::exec(const char* cmd) {
-    char buffer[128];
+std::string ec::agent::Handler::exec( std::string cmd) {
+    /*char buffer[128];
     std::string result = "";
     FILE* pipe = popen(cmd, "r");
     if (!pipe) throw std::runtime_error("popen() failed!");
     try {
         while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+            std::cout << "[dbg] hangs in here! " << std:: endl;
             result += buffer;
         }
     } catch (...) {
@@ -181,5 +181,11 @@ std::string ec::agent::Handler::exec(const char* cmd) {
         throw;
     }
     pclose(pipe);
-    return result;
+    return result;*/
+    std::string file_name = "result.txt" ;
+    std::system( ( cmd + " > " + file_name ).c_str() ) ; // redirect output to file
+
+    // open file for input, return string containing characters in the file
+    std::ifstream file(file_name) ;
+    return { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() } ;
 }
