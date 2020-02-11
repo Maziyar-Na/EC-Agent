@@ -4,9 +4,9 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/maaz/CLionProjects/Agent/Handler.cpp" "/home/maaz/CLionProjects/Agent/cmake-build-debug/CMakeFiles/Agent.dir/Handler.cpp.o"
-  "/home/maaz/CLionProjects/Agent/Server.cpp" "/home/maaz/CLionProjects/Agent/cmake-build-debug/CMakeFiles/Agent.dir/Server.cpp.o"
-  "/home/maaz/CLionProjects/Agent/main.cpp" "/home/maaz/CLionProjects/Agent/cmake-build-debug/CMakeFiles/Agent.dir/main.cpp.o"
+  "/home/greg/kernel/EC-4.20.16/EC-Agent/Agent/Handler.cpp" "/home/greg/kernel/EC-4.20.16/EC-Agent/Agent/cmake-build-debug/CMakeFiles/Agent.dir/Handler.cpp.o"
+  "/home/greg/kernel/EC-4.20.16/EC-Agent/Agent/Server.cpp" "/home/greg/kernel/EC-4.20.16/EC-Agent/Agent/cmake-build-debug/CMakeFiles/Agent.dir/Server.cpp.o"
+  "/home/greg/kernel/EC-4.20.16/EC-Agent/Agent/main.cpp" "/home/greg/kernel/EC-4.20.16/EC-Agent/Agent/cmake-build-debug/CMakeFiles/Agent.dir/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

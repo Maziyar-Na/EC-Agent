@@ -19,12 +19,26 @@ uint64_t ec_agent::Handler::handle_mem_req(ec_reclaim_msg_t* req) {
     return avail_mem;
 }
 
+uint64_t ec_agent::Handler::handle_cpu_req(ec_agent::ec_reclaim_msg_t *req) {
+    uint64_t ret = 0;
+    std::cout << "setting quota to: " << req->_quota << std::endl;
+    ret = syscall(__RESIZE_QUOTA_SYSCALL_, req->cgroup_id, req->_quota / 1000); //must divide since kernel multiplies
+    if(ret) {
+        std::cout << "quota set failed" << std::endl;
+    }
+
+    return req->_quota;
+}
+
+
 //Helper function to handle request
 uint64_t  ec_agent::Handler::handle_request(char* buff){
 
     uint64_t ret = 0;
-    ec_reclaim_msg_t* req = new ec_reclaim_msg_t;
+    auto *req = new ec_reclaim_msg_t;
     req = (ec_reclaim_msg_t*)buff;
+    std::cout << "req: id, is_mem, quota: " << req->cgroup_id << ", " << req->is_mem << ", " << req->_quota << std::endl;
+    std::cout << "reclaim msg size: " << sizeof(*req) << std::endl;
 
     switch (req -> is_mem) {
         case TRUE:
@@ -32,7 +46,8 @@ uint64_t  ec_agent::Handler::handle_request(char* buff){
             break;
 
         case FALSE:
-            cout << "[MAYBE TODO] Handling CPU request in the agent!" << endl;
+            std::cout << "[Agent DBG]: handle cpu_req" << std::endl;
+            ret = handle_cpu_req(req);
             break;
 
         default:
@@ -68,3 +83,4 @@ void* ec_agent::Handler::run_handler(void* server_args)
     args->req_handler->run(args->clifd);
     return NULL;
 }
+

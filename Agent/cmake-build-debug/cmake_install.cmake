@@ -1,4 +1,4 @@
-# Install script for directory: /home/maaz/CLionProjects/Agent
+# Install script for directory: /home/greg/kernel/EC-4.20.16/EC-Agent/Agent
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/maaz/CLionProjects/Agent/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/greg/kernel/EC-4.20.16/EC-Agent/Agent/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

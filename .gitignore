@@ -1,0 +1,10 @@
+Agent/cmake-build-debug/
+Agent/cmake-build-release
+Agent/CMakeFiles/
+Agent/CMakeCache.txt
+Agent/Makefile
+Agent/cmake_install.cmake
+Agent/Agent
+Agent/agent
+Agent/.idea/
+
