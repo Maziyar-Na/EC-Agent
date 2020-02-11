@@ -4,14 +4,17 @@
 CMakeFiles/Agent.dir/Handler.cpp.o: Handler.cpp
 CMakeFiles/Agent.dir/Handler.cpp.o: Handler.h
 CMakeFiles/Agent.dir/Handler.cpp.o: om.h
+CMakeFiles/Agent.dir/Handler.cpp.o: proto/msg.pb.h
 
 CMakeFiles/Agent.dir/Server.cpp.o: Handler.h
 CMakeFiles/Agent.dir/Server.cpp.o: Server.cpp
 CMakeFiles/Agent.dir/Server.cpp.o: Server.h
 CMakeFiles/Agent.dir/Server.cpp.o: om.h
+CMakeFiles/Agent.dir/Server.cpp.o: proto/msg.pb.h
 
 CMakeFiles/Agent.dir/main.cpp.o: Handler.h
 CMakeFiles/Agent.dir/main.cpp.o: Server.h
 CMakeFiles/Agent.dir/main.cpp.o: main.cpp
 CMakeFiles/Agent.dir/main.cpp.o: om.h
+CMakeFiles/Agent.dir/main.cpp.o: proto/msg.pb.h
 
