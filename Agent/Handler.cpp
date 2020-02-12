@@ -78,7 +78,7 @@ uint64_t ec::agent::Handler::connect_container(ec_msg_t* req) {
     pid_string = pid_string.substr(pos + 1, pid_string.size()-1);
     //std::cout << pid_string << std::endl;
 
-    std::string cmd_sysconnect = "./../../ec_syscalls/sys_connect ";
+    std::string cmd_sysconnect = "./../../../ec_syscalls/sys_connect ";
 
     std::string ip_address_string = req->client_ip.to_string();
     cmd_sysconnect += ip_address_string + " " + pid_string + " 4444";
