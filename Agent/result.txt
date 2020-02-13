@@ -1,1 +1,1 @@
-[dbg] SUCCESS in calling syscall (ec_connect) with ip: 3232237066, port: 4444, pid: 26831 - returned 0 . Bye
+[dbg] SUCCESS in calling syscall (ec_connect) with ip: 2154401930, port: 4444, pid: 37318 - returned 0 . Bye
