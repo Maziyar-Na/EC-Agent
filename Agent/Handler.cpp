@@ -73,12 +73,10 @@ char* ec::agent::Handler::handle_request(char* buff){
 
     /* 
     cout<< "[RX MESSAGE DBG]: " << endl;
-    cout<< "[ip]: " << rx_msg.client_ip() << endl;
     cout<< "[request type]: " << rx_msg.req_type() << endl;
-    cout<< "[payload string]: " << rx_msg.payload_string() << endl;
     cout<< "[cgroup id]: " << rx_msg.cgroup_id() << endl;
     */
-
+    
     uint64_t ret = 0;
     switch (rx_msg.req_type() ) {
         case _CPU_:
