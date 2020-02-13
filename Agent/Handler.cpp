@@ -18,10 +18,8 @@ uint64_t ec::agent::Handler::handle_mem_req(uint64_t cgroup_id) {
 }
 
 uint64_t ec::agent::Handler::connect_container(string server_ip, string container_name) {
-    //std::cout << "Container name: " << container_name << std::endl;
     string cmd = "sudo docker ps -a | grep k8s_" + container_name + " | awk '{print $1, $3}'";
-    // std::cout << "docker cmd: " << cmd << std::endl;
-    
+
     // Todo: Change this so that we looop for maximum of 5 seconds or until a new container is created 
     sleep(5);
 
@@ -42,7 +40,7 @@ uint64_t ec::agent::Handler::connect_container(string server_ip, string containe
         std::cout << "[dbg]: Error in getting PID for container with name:" << container_name << std::endl;
         return (uint64_t) -1;
     }
-    // cout << "[dbg] Docker Container PID: " << pid << endl;
+
     pid.erase(remove(pid.begin(), pid.end(), '\n'), pid.end());
     cmd = "../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444";
 
