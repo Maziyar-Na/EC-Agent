@@ -153,25 +153,12 @@ void* ec::agent::Handler::run_handler(void* server_args)
 }
 
 std::string ec::agent::Handler::exec(string command) {
-    char buffer[128];
-    string result = "";
+    std::string file_name = "result.txt" ;
+    std::system( ( cmd + " > " + file_name ).c_str() ) ; // redirect output to file
 
-    // Open pipe to file
-    FILE* pipe = popen(command.c_str(), "r");
-    if (!pipe) {
-        return "popen failed!";
-    }
-
-    // read till end of process:
-    while (!feof(pipe)) {
-
-        // use buffer to read and add to result
-        if (fgets(buffer, 128, pipe) != NULL)
-            result += buffer;
-    }
-
-    pclose(pipe);
-    return result;
+    // open file for input, return string containing characters in the file
+    std::ifstream file(file_name) ;
+    return { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() } ;
 }
 
 
