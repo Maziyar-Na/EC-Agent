@@ -24,9 +24,10 @@ uint64_t ec::agent::Handler::connect_container(string server_ip, string containe
     sleep(5);
 
     std::string container_id = exec(cmd);
+    std::cout << "[dbg]: container_id:  " << container_id << std::endl;
     // This is the where we can confirm whether the container was successfully created and deployed
     if (container_id.size() == 0) {
-        std::cout << "[dbg]: No container found with name:" << container_name << std::endl;
+        std::cout << "[dbg]: No container found with name: " << container_name << std::endl;
         return (uint64_t) -1;
     }
     size_t pos = container_id.find(" ");    
@@ -153,12 +154,39 @@ void* ec::agent::Handler::run_handler(void* server_args)
 }
 
 std::string ec::agent::Handler::exec(string command) {
-    std::string file_name = "result.txt" ;
-    std::system( ( cmd + " > " + file_name ).c_str() ) ; // redirect output to file
+    // char buffer[128];
+    // string result = "";
 
-    // open file for input, return string containing characters in the file
-    std::ifstream file(file_name) ;
-    return { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() } ;
+    // // Open pipe to file
+    // FILE* pipe = popen(command.c_str(), "r");
+    // if (!pipe) {
+    //     return "popen failed!";
+    // }
+
+    // // read till end of process:
+    // while (!feof(pipe)) {
+
+    //     // use buffer to read and add to result
+    //     if (fgets(buffer, 128, pipe) != NULL)
+    //         result += buffer;
+    // }
+
+    // pclose(pipe);
+    // return result;
+    // run a process and create a streambuf that reads its stdout and stderr
+    string data;
+    FILE * stream;
+    const int max_buffer = 256;
+    char buffer[max_buffer];
+    command.append(" 2>&1");
+
+    stream = popen(command.c_str(), "r");
+    if (stream) {
+    while (!feof(stream))
+    if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
+    pclose(stream);
+    }
+    return data;
 }
 
 
