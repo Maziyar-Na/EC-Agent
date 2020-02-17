@@ -24,7 +24,7 @@ uint64_t ec::agent::Handler::connect_container(string server_ip, string containe
     sleep(5);
 
     std::string container_id = exec(cmd);
-    std::cout << "[dbg]: container_id:  " << container_id << std::endl;
+    // std::cout << "[dbg]: container_id:  " << container_id << std::endl;
     // This is the where we can confirm whether the container was successfully created and deployed
     if (container_id.size() == 0) {
         std::cout << "[dbg]: No container found with name: " << container_name << std::endl;
