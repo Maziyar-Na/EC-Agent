@@ -1,1 +1,0 @@
-/usr/bin/g++  -O3 -DNDEBUG   CMakeFiles/Agent.dir/Handler.cpp.o CMakeFiles/Agent.dir/Server.cpp.o CMakeFiles/Agent.dir/main.cpp.o  -o Agent  -Wl,-rpath,/usr/local/lib -lpthread proto/libproto.a /usr/local/lib/libprotobuf.so 
