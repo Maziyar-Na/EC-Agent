@@ -43,7 +43,7 @@ uint64_t ec::agent::Handler::connect_container(string server_ip, string containe
     }
 
     pid.erase(remove(pid.begin(), pid.end(), '\n'), pid.end());
-    cmd = "../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444";
+    cmd = "./../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444 " + "eno1";
 
     std::cout << "sysconnect command: " << cmd << std::endl;
 
