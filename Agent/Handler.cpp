@@ -11,13 +11,24 @@ uint64_t ec::agent::Handler::handle_mem_req(uint64_t cgroup_id) {
     std::cout << "cgroup_id: " << cgroup_id << std::endl;
     ret = syscall(__NR_SYSCALL__, cgroup_id, false);
 
-    cout << "[INFO] EC Agent: Reclaimed memory is: " << ret << endl;
+    std::cout << "[INFO] EC Agent: Reclaimed memory is: " << ret << std::endl;
     avail_mem += ret;
     
     return avail_mem;
 }
 
-uint64_t ec::agent::Handler::connect_container(string server_ip, string container_name) {
+uint64_t ec::agent::Handler::handle_cpu_req(uint64_t cgroup_id, uint64_t quota) {
+    uint64_t ret = 0;
+    std::cout << "setting quota to: " << quota << std::endl;
+    ret = syscall(__RESIZE_QUOTA_SYSCALL_, cgroup_id, quota / 1000); //must divide since kernel multiplies
+    if(ret) {
+        std::cout << "quota set failed" << std::endl;
+    }
+
+    return 0;//req->_quota;
+}
+
+uint64_t ec::agent::Handler::connect_container(const string &server_ip, const string &container_name) {
     string cmd = "sudo docker ps -a | grep k8s_" + container_name + " | awk '{print $1, $3}'";
 
     // Todo: Change this so that we looop for maximum of 5 seconds or until a new container is created 
@@ -26,7 +37,7 @@ uint64_t ec::agent::Handler::connect_container(string server_ip, string containe
     std::string container_id = exec(cmd);
     // std::cout << "[dbg]: container_id:  " << container_id << std::endl;
     // This is the where we can confirm whether the container was successfully created and deployed
-    if (container_id.size() == 0) {
+    if (container_id.empty()) {
         std::cout << "[dbg]: No container found with name: " << container_name << std::endl;
         return (uint64_t) -1;
     }
@@ -37,7 +48,7 @@ uint64_t ec::agent::Handler::connect_container(string server_ip, string containe
     cmd = "sudo docker inspect --format '{{ .State.Pid }}' " + container_id;
     string pid = exec(cmd);
     // // every container created should have a PID but in the case that it hasn't started, it won't have one. This is another error
-    if (pid.size() == 0) {
+    if (pid.empty()) {
         std::cout << "[dbg]: Error in getting PID for container with name:" << container_name << std::endl;
         return (uint64_t) -1;
     }
@@ -81,17 +92,18 @@ char* ec::agent::Handler::handle_request(char* buff){
     uint64_t ret = 0;
     switch (rx_msg.req_type() ) {
         case _CPU_:
-            cout << "[MAYBE TODO] Handling CPU request in the agent!" << endl;
+            std::cout << "[Agent DBG]: handle cpu_req" << std::endl;
+            ret = handle_cpu_req(rx_msg.cgroup_id(), rx_msg.quota());
             break;
         case _MEM_:
             ret = handle_mem_req(rx_msg.cgroup_id());
             ret = ret > 0 ? (uint64_t) ret: -1;
             break;
         case _INIT_:
-            cout << "[DBG] Init message, not sure if we need this" << endl;
+            std::cout << "[DBG] Init message, not sure if we need this" << std::endl;
             break;
         case _SLICE_:
-            cout << "[DBG] Slice message, not sure if we need this" << endl;
+            std::cout << "[DBG] Slice message, not sure if we need this" << std::endl;
             break;
         case _CONNECT_:
             ret = connect_container(rx_msg.client_ip(), rx_msg.payload_string());
@@ -100,7 +112,7 @@ char* ec::agent::Handler::handle_request(char* buff){
             ret = 2061374;//TODO: temporary. for testing purpose. we need a syscall to extract mem limit based on cgroup id
             break;
         default:
-            cerr << "[ERROR] Not going in the right way! request type is invalid!" << endl;
+            std::cerr << "[ERROR] Not going in the right way! request type is invalid!" << std::endl;
     }
 
     msg_struct::ECMessage tx_msg;
@@ -131,18 +143,19 @@ void ec::agent::Handler::run(int64_t clifd) {
     char buff[__BUFFSIZE__];
     int64_t bytes_read;
     bzero(buff, __BUFFSIZE__);
-    cout << "[RUN log] We are ready to accept request from GCM! fd is: " << clifd << endl;
+    std::cout << "[RUN log] We are ready to accept request from GCM! fd is: " << clifd << std::endl;
     char* tx_buff;
 
     while( (bytes_read = read(clifd, buff, __BUFFSIZE__) ) > 0 ) {
         tx_buff = handle_request(buff);
 
+        //TODO no need to send anything back if CPU resize quota
         if (write(clifd, (void*) tx_buff, __BUFFSIZE__) < 0) {
-            cout <<"[ERROR] writing to socket connection (Agent -> GCM) Failed! " << endl;
+            std::cout <<"[ERROR] writing to socket connection (Agent -> GCM) Failed! " << std::endl;
         }
     }
 
-    pthread_exit(NULL);
+    pthread_exit(nullptr);
 }
 
 void* ec::agent::Handler::run_handler(void* server_args)
@@ -150,29 +163,10 @@ void* ec::agent::Handler::run_handler(void* server_args)
     // cout << "[dbg] run_handler: thread executed!" << endl;
     auto *args = static_cast<serv_thread_args*>(server_args);
     args->req_handler->run(args->clifd);
-    return NULL;
+    return nullptr;
 }
 
-std::string ec::agent::Handler::exec(string command) {
-    // char buffer[128];
-    // string result = "";
-
-    // // Open pipe to file
-    // FILE* pipe = popen(command.c_str(), "r");
-    // if (!pipe) {
-    //     return "popen failed!";
-    // }
-
-    // // read till end of process:
-    // while (!feof(pipe)) {
-
-    //     // use buffer to read and add to result
-    //     if (fgets(buffer, 128, pipe) != NULL)
-    //         result += buffer;
-    // }
-
-    // pclose(pipe);
-    // return result;
+std::string ec::agent::Handler::exec(string &command) {
     // run a process and create a streambuf that reads its stdout and stderr
     string data;
     FILE * stream;
@@ -182,14 +176,15 @@ std::string ec::agent::Handler::exec(string command) {
 
     stream = popen(command.c_str(), "r");
     if (stream) {
-    while (!feof(stream))
-    if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
-    pclose(stream);
+        while (!feof(stream)) {
+            if (fgets(buffer, max_buffer, stream) != nullptr) {
+                data.append(buffer);
+            }
+        }
+        pclose(stream);
     }
     return data;
 }
-
-
 
 google::protobuf::uint32 ec::agent::Handler::readHdr(char *buf)
 {
@@ -199,4 +194,3 @@ google::protobuf::uint32 ec::agent::Handler::readHdr(char *buf)
   coded_input.ReadVarint32(&size);//Decode the HDR and get the size
   return size;
 }
-
