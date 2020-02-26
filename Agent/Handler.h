@@ -35,17 +35,6 @@ namespace ec {
     namespace agent {
         //TODO: these should not be typedefs
         using string = std::string;
-        typedef struct ec_msg {
-            om::net::ip4_addr client_ip;
-            uint32_t cgroup_id;
-            uint32_t req_type;        //0: cpu, 1: mem, 2: init, 3: slice, 4: create_cont
-            uint64_t rsrc_amnt;      //amount of resources (cpu/mem)
-            uint32_t request;        //1: request, 0: give back
-            uint64_t runtime_remaining;
-            uint64_t cont_name;
-
-        } ec_msg_t;
-
         class Handler {
         public:
             void run(int64_t clifd);
@@ -53,21 +42,19 @@ namespace ec {
 
         private:
             char *handle_request(char *buff);
-            uint64_t handle_mem_req(uint64_t cgroup_id);
-            uint64_t handle_cpu_req(uint64_t cgroup_id, uint64_t quota);
+            static uint64_t handle_mem_req(uint64_t cgroup_id);
+            static uint64_t handle_cpu_req(uint64_t cgroup_id, uint64_t quota);
 
-            uint64_t connect_container(const std::string &server_ip, const std::string &container_name);
-            std::string exec(std::string &command);
-            google::protobuf::uint32 readHdr(char *buf);
+            static uint64_t connect_container(const std::string &server_ip, const std::string &container_name);
+            static std::string exec(std::string &command);
+            static google::protobuf::uint32 readHdr(char *buf);
         };
 
-        typedef struct serv_thread_args
-        {
-            int64_t clifd;
-
-            Handler* req_handler;
-
-        } serv_thread_args_t;
+        struct serv_thread_args {
+            serv_thread_args()      = default;
+            int64_t clifd           = 0;
+            Handler* req_handler    = nullptr;
+        };
     }
 }
 #endif //AGENT_HANDLER_H

@@ -4,9 +4,8 @@
 
 #include "Server.h"
 
-ec::agent::Server::Server(uint16_t _port) : port(_port), is_avail(false) {
-    _ec_agent = new ec_agent_t;
-}
+ec::agent::Server::Server(uint16_t _port)
+    : port(_port), is_avail(false), _ec_agent(new ec_agent) {}
 
 void ec::agent::Server::init_agent_server(){
 
