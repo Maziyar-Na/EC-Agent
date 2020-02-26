@@ -75,6 +75,7 @@ void ec_agent::Server::run() {
             else
                 cerr<<"[EROOR] Accepting connection failed!" << endl;
         }
+        delete args->req_handler;
 
     }
 }

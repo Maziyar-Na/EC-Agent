@@ -27,7 +27,7 @@ uint64_t ec_agent::Handler::handle_cpu_req(ec_agent::ec_reclaim_msg_t *req) {
         std::cout << "quota set failed" << std::endl;
     }
 
-    return req->_quota;
+    return 0;//req->_quota;
 }
 
 
@@ -53,6 +53,7 @@ uint64_t  ec_agent::Handler::handle_request(char* buff){
         default:
             cerr << "[ERROR] Not going in the right way! request type is neither true nor false!" << endl;
     }
+//    delete req;
     return ret;
 }
 
@@ -67,20 +68,22 @@ void ec_agent::Handler::run(int64_t clifd) {
         ret = handle_request(buff);
 
         //const char* res = ret > 0 ? (const char*)ret : NOMEM;
-
-        if (write(clifd, (const char*) &ret, sizeof(ret)) < 0)
-            cout <<"[ERROR] writing to socket connection (Agent -> GCM) Failed! " << endl;
+        if(ret) {
+            if (write(clifd, (const char *) &ret, sizeof(ret)) < 0) {
+                cout << "[ERROR] writing to socket connection (Agent -> GCM) Failed! " << endl;
+            }
+        }
 
     }
 
-    pthread_exit(NULL);
+    pthread_exit(nullptr);
 }
 
 void* ec_agent::Handler::run_handler(void* server_args)
 {
     cout << "[dbg] run_handler: thread executed!" << endl;
-    serv_thread_args_t* args = static_cast<serv_thread_args_t*>(server_args);
+    auto args = static_cast<serv_thread_args_t*>(server_args);
     args->req_handler->run(args->clifd);
-    return NULL;
+    return nullptr;
 }
 
