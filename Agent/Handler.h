@@ -61,7 +61,7 @@ namespace ec {
                 
                 uint64_t handle_mem_req(uint64_t cgroup_id);
 
-                uint64_t connect_container(string server_ip, string container_name);
+                std::string connect_container(string server_ip, string container_name);
 
                 std::string exec(string command);
 

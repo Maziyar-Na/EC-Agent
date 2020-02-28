@@ -17,7 +17,7 @@ uint64_t ec::agent::Handler::handle_mem_req(uint64_t cgroup_id) {
     return avail_mem;
 }
 
-uint64_t ec::agent::Handler::connect_container(string server_ip, string container_name) {
+std::string ec::agent::Handler::connect_container(string server_ip, string container_name) {
     string cmd = "sudo docker ps -a | grep k8s_" + container_name + " | awk '{print $1, $3}'";
 
     // Todo: Change this so that we looop for maximum of 5 seconds or until a new container is created 
@@ -28,7 +28,7 @@ uint64_t ec::agent::Handler::connect_container(string server_ip, string containe
     // This is the where we can confirm whether the container was successfully created and deployed
     if (container_id.size() == 0) {
         std::cout << "[dbg]: No container found with name: " << container_name << std::endl;
-        return (uint64_t) -1;
+        return "error";
     }
     size_t pos = container_id.find(" ");    
     container_id = container_id.substr(0, pos);
@@ -39,7 +39,7 @@ uint64_t ec::agent::Handler::connect_container(string server_ip, string containe
     // // every container created should have a PID but in the case that it hasn't started, it won't have one. This is another error
     if (pid.size() == 0) {
         std::cout << "[dbg]: Error in getting PID for container with name:" << container_name << std::endl;
-        return (uint64_t) -1;
+        return "error";
     }
 
     pid.erase(remove(pid.begin(), pid.end(), '\n'), pid.end());
@@ -51,13 +51,10 @@ uint64_t ec::agent::Handler::connect_container(string server_ip, string containe
 
     if (output.find("ERROR") != std::string::npos) {
         std::cout << "[dbg]: Error in calling sys_connect for container with name:" << container_name << std::endl;
-        return (uint64_t) -1;
+        return "error";
     }
     
-    uint64_t pid_return_value;
-    std::istringstream iss(pid);
-    iss >> pid_return_value;
-    return pid_return_value;
+    return container_id;
 }
 
 //Helper function to handle request
@@ -79,6 +76,8 @@ char* ec::agent::Handler::handle_request(char* buff){
     */
     
     uint64_t ret = 0;
+    std::string container_id;
+    container_id = rx_msg.payload_string();
     switch (rx_msg.req_type() ) {
         case _CPU_:
             cout << "[MAYBE TODO] Handling CPU request in the agent!" << endl;
@@ -94,7 +93,7 @@ char* ec::agent::Handler::handle_request(char* buff){
             cout << "[DBG] Slice message, not sure if we need this" << endl;
             break;
         case _CONNECT_:
-            ret = connect_container(rx_msg.client_ip(), rx_msg.payload_string());
+            container_id = connect_container(rx_msg.client_ip(), rx_msg.payload_string());
             break;
         case _MEM_LIMIT_:
             ret = 2061374;//TODO: temporary. for testing purpose. we need a syscall to extract mem limit based on cgroup id
@@ -106,7 +105,7 @@ char* ec::agent::Handler::handle_request(char* buff){
     msg_struct::ECMessage tx_msg;
     tx_msg.set_req_type(rx_msg.req_type());
     tx_msg.set_rsrc_amnt(ret);
-    tx_msg.set_payload_string(rx_msg.payload_string());
+    tx_msg.set_payload_string(container_id);
 
     /*
     cout<< "[TX MESSAGE DBG LOG] " << endl;
