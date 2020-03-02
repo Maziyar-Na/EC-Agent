@@ -115,6 +115,11 @@ char* ec::agent::Handler::handle_request(char* buff){
             std::cerr << "[ERROR] Not going in the right way! request type is invalid!" << std::endl;
     }
 
+    //TODO: temp fix. just return nullptr if _CPU_ request.
+    if(rx_msg.req_type() == _CPU_) {
+        return nullptr;
+    }
+
     msg_struct::ECMessage tx_msg;
     tx_msg.set_req_type(rx_msg.req_type());
     tx_msg.set_rsrc_amnt(ret);
@@ -149,9 +154,11 @@ void ec::agent::Handler::run(int64_t clifd) {
     while( (bytes_read = read(clifd, buff, __BUFFSIZE__) ) > 0 ) {
         tx_buff = handle_request(buff);
 
-        //TODO no need to send anything back if CPU resize quota
-        if (write(clifd, (void*) tx_buff, __BUFFSIZE__) < 0) {
-            std::cout <<"[ERROR] writing to socket connection (Agent -> GCM) Failed! " << std::endl;
+        //TODO: temp fix. handle_request returns nullptr if it's a CPU req (on purpose)
+        if(!tx_buff) {
+            if (write(clifd, (void*) tx_buff, __BUFFSIZE__) < 0) {
+                std::cout <<"[ERROR] writing to socket connection (Agent -> GCM) Failed! " << std::endl;
+            }
         }
     }
 
