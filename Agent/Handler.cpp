@@ -77,8 +77,9 @@ char* ec::agent::Handler::handle_request(char* buff){
     
     uint64_t ret = 0;
     std::string container_id;
-    container_id = rx_msg.payload_string();
-    switch (rx_msg.req_type() ) {
+    // container_id = rx_msg.payload_string();
+    container_id = "0";
+    switch (rx_msg.req_type()) {
         case _CPU_:
             cout << "[MAYBE TODO] Handling CPU request in the agent!" << endl;
             break;
@@ -97,6 +98,10 @@ char* ec::agent::Handler::handle_request(char* buff){
             break;
         case _MEM_LIMIT_:
             ret = 2061374;//TODO: temporary. for testing purpose. we need a syscall to extract mem limit based on cgroup id
+            break;
+        case _CADVISOR_START_:
+            std::cout << "In CADVISOR START" << std::endl;
+            ret  = 6;
             break;
         default:
             cerr << "[ERROR] Not going in the right way! request type is invalid!" << endl;
