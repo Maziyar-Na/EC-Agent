@@ -25,17 +25,20 @@ uint64_t ec::agent::Handler::handle_cpu_req(uint64_t cgroup_id, uint64_t quota) 
         std::cout << "quota set failed" << std::endl;
     }
 
-    return 0;//req->_quota;
+    return ret;
 }
 
 uint64_t ec::agent::Handler::connect_container(const string &server_ip, const string &container_name) {
+    std::cout << "server_ip: " << server_ip << ". " << "container_name: " << container_name << std::endl;
     string cmd = "sudo docker ps -a | grep k8s_" + container_name + " | awk '{print $1, $3}'";
 
+    std::cout << "cmd: " << cmd << std::endl;
     // Todo: Change this so that we looop for maximum of 5 seconds or until a new container is created 
     sleep(5);
+    std::cout << "sup1" << std::endl;
 
     std::string container_id = exec(cmd);
-    // std::cout << "[dbg]: container_id:  " << container_id << std::endl;
+     std::cout << "[dbg]: container_id:  " << container_id << std::endl;
     // This is the where we can confirm whether the container was successfully created and deployed
     if (container_id.empty()) {
         std::cout << "[dbg]: No container found with name: " << container_name << std::endl;
@@ -53,8 +56,10 @@ uint64_t ec::agent::Handler::connect_container(const string &server_ip, const st
         return (uint64_t) -1;
     }
 
+    std::cout << "calling sysconnect" << std::endl;
+
     pid.erase(remove(pid.begin(), pid.end(), '\n'), pid.end());
-    cmd = "./../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444 " + "eno1";
+    cmd = "../../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444 " + "enp0s3";//"eno1";
 
     std::cout << "sysconnect command: " << cmd << std::endl;
 
@@ -83,13 +88,13 @@ char* ec::agent::Handler::handle_request(char* buff){
     rx_msg.ParseFromCodedStream(&codedIn);
     codedIn.PopLimit(msgLimit);
 
-    /* 
-    cout<< "[RX MESSAGE DBG]: " << endl;
-    cout<< "[request type]: " << rx_msg.req_type() << endl;
-    cout<< "[cgroup id]: " << rx_msg.cgroup_id() << endl;
-    */
-    
+//    std::cout<< "[RX MESSAGE DBG]: " << std::endl;
+//    std::cout<< "[request type]: " << rx_msg.req_type() <<  std::endl;
+//    std::cout<< "[cgroup id]: " << rx_msg.cgroup_id() << std::endl;
+//    std::cout << "rx_msg.quota: " << rx_msg.quota() << std::endl;
+
     uint64_t ret = 0;
+    std::cout << "rx_msg.req_type(): " << rx_msg.req_type() << std::endl;
     switch (rx_msg.req_type() ) {
         case _CPU_:
             std::cout << "[Agent DBG]: handle cpu_req" << std::endl;
@@ -116,9 +121,9 @@ char* ec::agent::Handler::handle_request(char* buff){
     }
 
     //TODO: temp fix. just return nullptr if _CPU_ request.
-    if(rx_msg.req_type() == _CPU_) {
-        return nullptr;
-    }
+//    if(rx_msg.req_type() == _CPU_) {
+//        return nullptr;
+//    }
 
     msg_struct::ECMessage tx_msg;
     tx_msg.set_req_type(rx_msg.req_type());
@@ -152,13 +157,18 @@ void ec::agent::Handler::run(int64_t clifd) {
     char* tx_buff;
 
     while( (bytes_read = read(clifd, buff, __BUFFSIZE__) ) > 0 ) {
+        std::cout << "rx req!" << std::endl;
         tx_buff = handle_request(buff);
+        std::cout << "handled req. tx_buff: " << tx_buff << std::endl;
 
         //TODO: temp fix. handle_request returns nullptr if it's a CPU req (on purpose)
-        if(!tx_buff) {
+        if(tx_buff) {
             if (write(clifd, (void*) tx_buff, __BUFFSIZE__) < 0) {
                 std::cout <<"[ERROR] writing to socket connection (Agent -> GCM) Failed! " << std::endl;
             }
+        }
+        else {
+            std::cout << "tx_buff == NULL" << std::endl;
         }
     }
 
@@ -175,11 +185,13 @@ void* ec::agent::Handler::run_handler(void* server_args)
 
 std::string ec::agent::Handler::exec(string &command) {
     // run a process and create a streambuf that reads its stdout and stderr
+    std::cout << "in exec" << std::endl;
     string data;
     FILE * stream;
     const int max_buffer = 256;
     char buffer[max_buffer];
-    command.append(" 2>&1");
+//    command.append(" 2>&1");
+    std::cout << "command: " << command << std::endl;
 
     stream = popen(command.c_str(), "r");
     if (stream) {
@@ -189,6 +201,9 @@ std::string ec::agent::Handler::exec(string &command) {
             }
         }
         pclose(stream);
+    }
+    else {
+        std::cout << "stream == NULL" << std::endl;
     }
     return data;
 }
