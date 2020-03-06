@@ -12,3 +12,4 @@ Agent/agent
 Agent/.idea/
 Agent/proto/msg.pb.cc
 Agent/proto/msg.pb.h
+Agent/log_non_ec_4.txt
