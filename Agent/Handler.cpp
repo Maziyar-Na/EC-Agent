@@ -35,7 +35,6 @@ uint64_t ec::agent::Handler::connect_container(const string &server_ip, const st
     std::cout << "cmd: " << cmd << std::endl;
     // Todo: Change this so that we looop for maximum of 5 seconds or until a new container is created 
     sleep(5);
-    std::cout << "sup1" << std::endl;
 
     std::string container_id = exec(cmd);
      std::cout << "[dbg]: container_id:  " << container_id << std::endl;
@@ -120,10 +119,6 @@ char* ec::agent::Handler::handle_request(char* buff){
             std::cerr << "[ERROR] Not going in the right way! request type is invalid!" << std::endl;
     }
 
-    //TODO: temp fix. just return nullptr if _CPU_ request.
-//    if(rx_msg.req_type() == _CPU_) {
-//        return nullptr;
-//    }
 
     msg_struct::ECMessage tx_msg;
     tx_msg.set_req_type(rx_msg.req_type());
@@ -159,7 +154,7 @@ void ec::agent::Handler::run(int64_t clifd) {
     while( (bytes_read = read(clifd, buff, __BUFFSIZE__) ) > 0 ) {
         std::cout << "rx req!" << std::endl;
         tx_buff = handle_request(buff);
-        std::cout << "handled req. tx_buff: " << tx_buff << std::endl;
+//        std::cout << "handled req. tx_buff: " << tx_buff << std::endl;
 
         //TODO: temp fix. handle_request returns nullptr if it's a CPU req (on purpose)
         if(tx_buff) {
