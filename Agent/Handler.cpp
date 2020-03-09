@@ -21,6 +21,7 @@ std::string ec::agent::Handler::connect_container(string server_ip, string conta
     string cmd = "sudo docker ps -a | grep k8s_" + container_name + " | awk '{print $1, $3}'";
 
     // Todo: Change this so that we looop for maximum of 5 seconds or until a new container is created 
+    
     sleep(5);
 
     std::string container_id = exec(cmd);
@@ -53,7 +54,6 @@ std::string ec::agent::Handler::connect_container(string server_ip, string conta
         std::cout << "[dbg]: Error in calling sys_connect for container with name:" << container_name << std::endl;
         return "error";
     }
-    
     return container_id;
 }
 
@@ -77,8 +77,9 @@ char* ec::agent::Handler::handle_request(char* buff){
     
     uint64_t ret = 0;
     std::string container_id;
-    // container_id = rx_msg.payload_string();
-    container_id = "0";
+
+    msg_struct::ECMessage tx_msg;
+    tx_msg.set_req_type(rx_msg.req_type());
     switch (rx_msg.req_type()) {
         case _CPU_:
             cout << "[MAYBE TODO] Handling CPU request in the agent!" << endl;
@@ -95,22 +96,14 @@ char* ec::agent::Handler::handle_request(char* buff){
             break;
         case _CONNECT_:
             container_id = connect_container(rx_msg.client_ip(), rx_msg.payload_string());
-            break;
-        case _MEM_LIMIT_:
-            ret = 2061374;//TODO: temporary. for testing purpose. we need a syscall to extract mem limit based on cgroup id
-            break;
-        case _CADVISOR_START_:
-            std::cout << "In CADVISOR START" << std::endl;
-            ret  = 6;
+            std::cout << "docker container docker id: " << container_id << std::endl;
+            tx_msg.set_payload_string(container_id);
             break;
         default:
             cerr << "[ERROR] Not going in the right way! request type is invalid!" << endl;
     }
-
-    msg_struct::ECMessage tx_msg;
-    tx_msg.set_req_type(rx_msg.req_type());
     tx_msg.set_rsrc_amnt(ret);
-    tx_msg.set_payload_string(container_id);
+    tx_msg.set_cgroup_id(0);
 
     /*
     cout<< "[TX MESSAGE DBG LOG] " << endl;

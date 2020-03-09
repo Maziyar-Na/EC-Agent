@@ -25,8 +25,6 @@
 #define _INIT_ 2
 #define _SLICE_ 3
 #define _CONNECT_ 4
-#define _MEM_LIMIT_ 5
-#define _CADVISOR_START_ 6
 #define __NR_SYSCALL__ 336
 
 using namespace std;

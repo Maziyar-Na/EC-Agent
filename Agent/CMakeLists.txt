@@ -9,6 +9,10 @@ find_package(Protobuf REQUIRED)
 add_subdirectory(proto)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
-add_executable(Agent Handler.cpp Handler.h Server.cpp Server.h om.h main.cpp)
+add_executable(Agent main.cpp 
+            Handler.cpp                     Handler.h 
+            Server.cpp                      Server.h 
+            om.h
+)
 
-target_link_libraries(Agent ${PTHREAD_LIB} proto ${PROTOBUF_LIBRARY})
+target_link_libraries(Agent PRIVATE ${PTHREAD_LIB} proto ${PROTOBUF_LIBRARY})
