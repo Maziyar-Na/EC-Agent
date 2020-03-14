@@ -9,7 +9,7 @@ uint64_t ec::agent::Handler::handle_mem_req(uint64_t cgroup_id) {
     uint64_t ret = 0, avail_mem = 0;
 
     std::cout << "cgroup_id: " << cgroup_id << std::endl;
-    ret = syscall(__NR_SYSCALL__, cgroup_id, false);
+    ret = syscall(__RESIZE_MAX_MEM_SYSCALL__, cgroup_id, false);
 
     std::cout << "[INFO] EC Agent: Reclaimed memory is: " << ret << std::endl;
     avail_mem += ret;
@@ -27,6 +27,18 @@ uint64_t ec::agent::Handler::handle_cpu_req(uint64_t cgroup_id, uint64_t quota) 
 
     return ret;
 }
+
+uint64_t ec::agent::Handler::handle_resize_max_mem(uint16_t cgroup_id, uint64_t new_limit, int is_memsw) {
+    uint64_t ret = 0;
+    std::cout << "setting new mem limit to: " << new_limit << std::endl;
+    ret = syscall(__RESIZE_MAX_MEM_SYSCALL__, cgroup_id, new_limit, false);
+
+    if(!ret) {
+        std::cout << "resize_max_mem failed!" << std::endl;
+    }
+    return ret;
+}
+
 
 uint64_t ec::agent::Handler::connect_container(const string &server_ip, const string &container_name) {
     std::cout << "server_ip: " << server_ip << ". " << "container_name: " << container_name << std::endl;
@@ -114,6 +126,9 @@ char* ec::agent::Handler::handle_request(char* buff){
             break;
         case _MEM_LIMIT_:
             ret = 2061374;//TODO: temporary. for testing purpose. we need a syscall to extract mem limit based on cgroup id
+            break;
+        case _SET_MAX_MEM_:
+            ret = handle_resize_max_mem(rx_msg.cgroup_id(), rx_msg.rsrc_amnt(), false);
             break;
         default:
             std::cerr << "[ERROR] Not going in the right way! request type is invalid!" << std::endl;
@@ -211,3 +226,4 @@ google::protobuf::uint32 ec::agent::Handler::readHdr(char *buf)
   coded_input.ReadVarint32(&size);//Decode the HDR and get the size
   return size;
 }
+
