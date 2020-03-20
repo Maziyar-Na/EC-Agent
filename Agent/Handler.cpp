@@ -39,6 +39,23 @@ uint64_t ec::agent::Handler::handle_resize_max_mem(uint16_t cgroup_id, uint64_t 
     return ret;
 }
 
+uint64_t ec::agent::Handler::get_memory_limit_in_pages(uint16_t cgroup_id) {
+    uint64_t ret = 0;
+    ret = syscall(__GET_MEM_LIMIT_SYSCALL__, cgroup_id);
+    if(!ret)
+        std::cout << "[ERROR] Not able to read memory limit of the cgroup with cgroup id: " << cgroup_id << std::endl;
+
+    return ret;
+}
+
+uint64_t ec::agent::Handler::get_memory_usage_in_pages(uint16_t cgroup_id) {
+    uint64_t ret = 0;
+    ret = syscall(__GET_MEM_USAGE_SYSCALL__, cgroup_id);
+    if(!ret)
+        std::cout << "[ERROR] Not able to read memory usage of the cgroup with cgroup id: " << cgroup_id << std::endl;
+
+    return ret;
+}
 
 uint64_t ec::agent::Handler::connect_container(const string &server_ip, const string &container_name) {
     std::cout << "server_ip: " << server_ip << ". " << "container_name: " << container_name << std::endl;
@@ -70,7 +87,7 @@ uint64_t ec::agent::Handler::connect_container(const string &server_ip, const st
     std::cout << "calling sysconnect" << std::endl;
 
     pid.erase(remove(pid.begin(), pid.end(), '\n'), pid.end());
-    cmd = "../../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444 " + "enp0s3";//"eno1";
+    cmd = "./../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444 " + "eno1";//"eno1";
 
     std::cout << "sysconnect command: " << cmd << std::endl;
 
@@ -125,7 +142,10 @@ char* ec::agent::Handler::handle_request(char* buff){
             ret = connect_container(rx_msg.client_ip(), rx_msg.payload_string());
             break;
         case _MEM_LIMIT_:
-            ret = 2061374;//TODO: temporary. for testing purpose. we need a syscall to extract mem limit based on cgroup id
+            ret = get_memory_limit_in_pages(rx_msg.cgroup_id());
+            break;
+        case _MEM_USAGE_:
+            ret = get_memory_usage_in_pages(rx_msg.cgroup_id());
             break;
         case _SET_MAX_MEM_:
             ret = handle_resize_max_mem(rx_msg.cgroup_id(), rx_msg.rsrc_amnt(), false);

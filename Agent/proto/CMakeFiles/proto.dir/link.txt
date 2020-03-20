@@ -1,0 +1,1 @@
+/usr/bin/g++ -fPIC -O3 -DNDEBUG  -shared -Wl,-soname,libproto.so -o libproto.so CMakeFiles/proto.dir/msg.pb.cc.o 
