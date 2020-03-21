@@ -124,10 +124,9 @@ char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
 //    std::cout<< "[request type]: " << rx_msg.req_type() <<  std::endl;
 //    std::cout<< "[cgroup id]: " << rx_msg.cgroup_id() << std::endl;
 //    std::cout << "rx_msg.quota: " << rx_msg.quota() << std::endl;
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::cout << "---------------------" << std::endl;
-    std::cout << "in quota: " << rx_msg.quota() << std::endl;
-    std::cout << "in seq num: " << rx_msg.request() << std::endl;
+//    std::cout << "---------------------" << std::endl;
+//    std::cout << "in quota: " << rx_msg.quota() << std::endl;
+//    std::cout << "in seq num: " << rx_msg.request() << std::endl;
 //    std::cout << "in time: " << std::chrono::system_clock::to_time_t(t) << std::endl;
 
     uint64_t ret = 0;
@@ -174,11 +173,9 @@ char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
     tx_msg.set_request(rx_msg.request());
     tx_msg.set_payload_string(rx_msg.payload_string());
 
-    auto t2 = std::chrono::high_resolution_clock::now();
-    std::cout << "out rsrc_amnt: " << tx_msg.rsrc_amnt() << std::endl;
-    std::cout << "out seq num: " << tx_msg.request() << std::endl;
-    std::cout << "out quota: " << tx_msg.quota() << std::endl;
-    std::cout << "duration: " << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() << std::endl;
+//    std::cout << "out rsrc_amnt: " << tx_msg.rsrc_amnt() << std::endl;
+//    std::cout << "out seq num: " << tx_msg.request() << std::endl;
+//    std::cout << "out quota: " << tx_msg.quota() << std::endl;
 
 
     /*
