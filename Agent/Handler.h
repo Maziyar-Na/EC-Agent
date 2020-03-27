@@ -56,7 +56,7 @@ namespace ec {
 
             static int64_t handle_read_quota(uint16_t cgroup_id);
 
-            static uint64_t connect_container(const std::string &server_ip, const std::string &container_name);
+            static std::string connect_container(const std::string &server_ip, const std::string &container_name);
             static std::string exec(std::string &command);
             static google::protobuf::uint32 readHdr(char *buf);
             std::mutex protolock;

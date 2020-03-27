@@ -60,7 +60,7 @@ uint64_t ec::agent::Handler::handle_resize_max_mem(uint16_t cgroup_id, uint64_t 
 }
 
 
-uint64_t ec::agent::Handler::connect_container(const string &server_ip, const string &container_name) {
+std::string ec::agent::Handler::connect_container(const string &server_ip, const string &container_name) {
     std::cout << "server_ip: " << server_ip << ". " << "container_name: " << container_name << std::endl;
     string cmd = "sudo docker ps -a | grep k8s_" + container_name + " | awk '{print $1, $3}'";
 
@@ -91,7 +91,7 @@ uint64_t ec::agent::Handler::connect_container(const string &server_ip, const st
     std::cout << "calling sysconnect" << std::endl;
 
     pid.erase(remove(pid.begin(), pid.end(), '\n'), pid.end());
-    cmd = "../../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444 " + "enp0s3";//"eno1";
+    cmd = "../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444 " + "eno1";//"eno1";
 
     std::cout << "sysconnect command: " << cmd << std::endl;
 
@@ -125,10 +125,13 @@ char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
 //    std::cout << "in quota: " << rx_msg.quota() << std::endl;
 //    std::cout << "in seq num: " << rx_msg.request() << std::endl;
 //    std::cout << "in time: " << std::chrono::system_clock::to_time_t(t) << std::endl;
-
+    
     uint64_t ret = 0;
     uint64_t updated_quota = 0;
+    std::string container_id;
     std::cout << "rx_msg.req_type(): " << rx_msg.req_type() << std::endl;
+
+    msg_struct::ECMessage tx_msg;
     switch (rx_msg.req_type() ) {
         case _CPU_:
             std::cout << "[Agent DBG]: handle cpu_req" << std::endl;
@@ -161,12 +164,10 @@ char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
             std::cerr << "[ERROR] Not going in the right way! request type is invalid!" << std::endl;
     }
 
-    msg_struct::ECMessage tx_msg;
     tx_msg.set_req_type(rx_msg.req_type());
     tx_msg.set_rsrc_amnt(ret);
     tx_msg.set_quota(updated_quota);
     tx_msg.set_request(rx_msg.request());
-    tx_msg.set_payload_string(rx_msg.payload_string());
 
 //    std::cout << "out rsrc_amnt: " << tx_msg.rsrc_amnt() << std::endl;
 //    std::cout << "out seq num: " << tx_msg.request() << std::endl;
