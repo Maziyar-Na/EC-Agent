@@ -25,27 +25,25 @@ using namespace std;
 namespace ec {
     namespace agent {
 
-        typedef struct ec_agent {
-
-            int64_t sockfd;
-
-            struct sockaddr_in addr;
-
-        } ec_agent_t;
 
         class Server {
 
         public:
             explicit Server(uint16_t _port);
 
-            void init_agent_server();
+            struct ec_agent {
+                ec_agent() = default;
+                int64_t sockfd          = 0;
+                struct sockaddr_in addr;
+            };
 
+            void init_agent_server();
             void run();
 
         private:
             uint16_t port;
 
-            ec_agent_t *_ec_agent;
+            ec_agent *_ec_agent;
 
             bool is_avail;
 
