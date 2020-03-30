@@ -1,3 +1,0 @@
-/mnt/ECKernel/EC-Agent/Agent/CMakeFiles/rebuild_cache.dir
-/mnt/ECKernel/EC-Agent/Agent/CMakeFiles/edit_cache.dir
-/mnt/ECKernel/EC-Agent/Agent/CMakeFiles/Agent.dir

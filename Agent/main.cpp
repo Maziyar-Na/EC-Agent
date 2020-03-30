@@ -7,7 +7,7 @@ int main() {
     cout << "[INFO] EC Agent started!" << endl;
 
     //Initialize and start the elastic container agent
-    ec_agent::Server* s = new ec_agent::Server(_PORT_);
+    auto *s = new ec::agent::Server(_PORT_);
     s->init_agent_server();
     s->run();
 

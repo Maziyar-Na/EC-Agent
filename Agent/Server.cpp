@@ -1,13 +1,13 @@
 //
 // Created by maaz on 9/24/19.
 //
+
 #include "Server.h"
 
-ec_agent::Server::Server(uint16_t _port) : port(_port), is_avail(false) {
-    _ec_agent = new ec_agent_t;
-}
+ec::agent::Server::Server(uint16_t _port)
+    : port(_port), is_avail(false), _ec_agent(new ec_agent) {}
 
-void ec_agent::Server::init_agent_server(){
+void ec::agent::Server::init_agent_server(){
 
     int32_t addrlen, opt = 1;
 
@@ -18,7 +18,7 @@ void ec_agent::Server::init_agent_server(){
 
     cout << "[dgb]: Agent server socket fd: " << _ec_agent->sockfd << endl;
 
-    if(setsockopt(_ec_agent->sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, (char*)&opt, sizeof(opt))) {
+    if(setsockopt(_ec_agent->sockfd, SOL_SOCKET, SO_REUSEPORT, (char*)&opt, sizeof(opt))) {
         cout << "[ERROR]: Agent server socket fd: " << _ec_agent->sockfd << ". Setting socket options failed!" << endl;
         exit(EXIT_FAILURE);
     }
@@ -41,12 +41,12 @@ void ec_agent::Server::init_agent_server(){
     //req_handler = new Handler();
 }
 
-void ec_agent::Server::run() {
+void ec::agent::Server::run() {
     fd_set readfds;
     struct sockaddr_in cli_cgroup;
     int64_t  max_sd, cli_cgroup_len, clifd;
     pthread_t agent_threads[_MAXGCMNO_];
-    serv_thread_args_t* args = new serv_thread_args_t;
+    auto *args = new serv_thread_args;
     int64_t num_of_active_clients = 0;
 
     //Prerequisites
@@ -75,6 +75,7 @@ void ec_agent::Server::run() {
             else
                 cerr<<"[EROOR] Accepting connection failed!" << endl;
         }
+        delete args->req_handler;
 
     }
 }
