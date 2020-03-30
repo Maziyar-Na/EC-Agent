@@ -33,20 +33,20 @@ uint64_t ec::agent::Handler::handle_cpu_req(uint64_t cgroup_id, uint64_t quota, 
     return ret;
 }
 
-int64_t ec::agent::Handler::handle_read_quota(uint16_t cgroup_id) {
-    long ret = 0;
-    std::cout << "reading quota" << std::endl;
-    ret = syscall(__READ_QUOTA_SYSYCALL__, cgroup_id);
-    if(ret == -1) {
-        std::cout << "quota is RUNTIME_INF" << std::endl;
-        return -1;
-    }
-    else if(ret == 1) {
-        std::cout << "error reading quota!" << std::endl;
-        return 1;
-    }
-    return ret;
-}
+//int64_t ec::agent::Handler::handle_read_quota(uint16_t cgroup_id) {
+//    long ret = 0;
+//    std::cout << "reading quota" << std::endl;
+//    ret = syscall(__READ_QUOTA_SYSYCALL__, cgroup_id);
+//    if(ret == -1) {
+//        std::cout << "quota is RUNTIME_INF" << std::endl;
+//        return -1;
+//    }
+//    else if(ret == 1) {
+//        std::cout << "error reading quota!" << std::endl;
+//        return 1;
+//    }
+//    return ret;
+//}
 
 uint64_t ec::agent::Handler::handle_resize_max_mem(uint16_t cgroup_id, uint64_t new_limit, int is_memsw) {
     uint64_t ret = 0;
@@ -158,9 +158,9 @@ char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
         case _SET_MAX_MEM_:
             ret = handle_resize_max_mem(rx_msg.cgroup_id(), rx_msg.rsrc_amnt(), false);
             break;
-        case _READ_QUOTA_:
-            ret = handle_read_quota(rx_msg.cgroup_id());
-            break;
+//        case _READ_QUOTA_:
+//            ret = handle_read_quota(rx_msg.cgroup_id());
+//            break;
         default:
             std::cerr << "[ERROR] Not going in the right way! request type is invalid!" << std::endl;
     }
