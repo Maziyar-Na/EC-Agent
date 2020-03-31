@@ -54,7 +54,7 @@ namespace ec {
             static uint64_t handle_cpu_req(uint64_t cgroup_id, uint64_t quota, uint64_t &updated_quota);
             static uint64_t handle_resize_max_mem(uint16_t cgroup_id, uint64_t new_limit, int is_memsw);
 
-            static int64_t handle_read_quota(uint16_t cgroup_id);
+//            static int64_t handle_read_quota(uint16_t cgroup_id);
 
             static std::string connect_container(const std::string &server_ip, const std::string &container_name);
             static std::string exec(std::string &command);
