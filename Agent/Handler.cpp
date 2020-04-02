@@ -78,7 +78,7 @@ std::string ec::agent::Handler::connect_container(const string &server_ip, const
     }
     size_t pos = container_id.find(" ");    
     container_id = container_id.substr(0, pos);
-    // std::cout << "[dbg] Docker Container ID: " << container_id << std::endl;
+     std::cout << "[dbg] Docker Container ID: " << container_id << std::endl;
 
     cmd = "sudo docker inspect --format '{{ .State.Pid }}' " + container_id;
     string pid = exec(cmd);
@@ -91,7 +91,7 @@ std::string ec::agent::Handler::connect_container(const string &server_ip, const
     std::cout << "calling sysconnect" << std::endl;
 
     pid.erase(remove(pid.begin(), pid.end(), '\n'), pid.end());
-    cmd = "../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444 " + "eno1";//"eno1";
+    cmd = "../../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444 " + "eno1";//"eno1";
 
     std::cout << "sysconnect command: " << cmd << std::endl;
 
@@ -105,7 +105,7 @@ std::string ec::agent::Handler::connect_container(const string &server_ip, const
 }
 
 //Helper function to handle request
-char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
+char* ec::agent::Handler::handle_request(char* buff, unsigned long &tx_size){
 
 
     google::protobuf::uint32 siz = readHdr(buff);
@@ -182,8 +182,10 @@ char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
     */
 
     tx_size = tx_msg.ByteSizeLong()+4;
-    char* tx_buf = new char[tx_size];
-    google::protobuf::io::ArrayOutputStream arrayOut(tx_buf, tx_size);
+//    char* tx_buf = new char[tx_size];
+    char *tx_buf{ new char[tx_size]{} };
+    std::cout << *tx_buf << std::endl;
+    google::protobuf::io::ArrayOutputStream arrayOut(tx_buf, (int)tx_size);
     google::protobuf::io::CodedOutputStream codedOut(&arrayOut);
     codedOut.WriteVarint32(tx_msg.ByteSizeLong());
     tx_msg.SerializeToCodedStream(&codedOut);
@@ -198,7 +200,7 @@ void ec::agent::Handler::run(int64_t clifd) {
 //    bzero(buff, __BUFFSIZE__);
     std::cout << "[RUN log] We are ready to accept request from GCM! fd is: " << clifd << std::endl;
     char* tx_buff;
-    int tx_size = 0;
+    unsigned long tx_size = 0;
 
     while( (bytes_read = read(clifd, buff, __BUFFSIZE__) ) > 0 ) {
         std::cout << "rx req!" << std::endl;
