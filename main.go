@@ -9,7 +9,7 @@ import (
 	"bufio"
 	"io"
 	"github.com/golang/protobuf/proto"
-	"msg_struct"
+	"github.com/Maziyar-Na/EC-Agent/msg"
 	"os/exec"
 	"time"
 	"context"
@@ -128,7 +128,7 @@ func handle_resize_max_mem(cgroup_id uint64, new_limit uint64, is_memsw int) (ui
 	avail_mem := uint64(avail_mem_ret)
 
 	if avail_mem == 0 {
-		log.Printf("[INFO]: EC Agent: resize_max_mem fails\n", avail_mem)
+		log.Printf("[INFO]: EC Agent: resize_max_mem fails. Ret: %d \n", avail_mem)
 	}
 	return avail_mem
 }
