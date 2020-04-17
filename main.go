@@ -56,9 +56,9 @@ func connect_container(server_ip, container_name string) (string, uint64) {
 	
 	// Heads up, this will change once it's integrated into kubelet (cuz kubelets check for alive pods/containers in a different way)
 	cmd := "sudo docker ps -a | grep k8s_" + container_name + " | awk '{print $1}'"
-	// Loops for max of 10 seconds or whenever uit finds the container, whichever comes first
+	// Loops for max of 15 seconds or whenever it finds the container, whichever comes first
 	var container_id string
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	for {
     	out, err := exec.CommandContext(ctx, "/bin/sh",  "-c" , cmd).Output()
