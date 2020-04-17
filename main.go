@@ -1,3 +1,6 @@
+// Btw, the reason this has been written as one script as of now is because the code in main() will be inserted into 
+// the kubelet and the rest of the file will be a standalone package
+
 package main
 
 import (
@@ -25,9 +28,20 @@ const INCREASE_MEM_CG_MARGIN_SYSCALL = 337
 const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 
-type ProtobufData struct {
-	Size	int
-	Payload []byte
+const INTERFACE = "eno1" // This could be changed
+
+func getIpFromInterface(inter string) net.IP {
+	byNameInterface, err := net.InterfaceByName(inter)
+	if err != nil {
+			log.Println(err)
+	}
+	addresses, err := byNameInterface.Addrs()
+	// for k, v := range addresses {
+	// 	log.Printf("Interface Address #%v : %v\n", k, v.String())
+	// }
+	ipv4Addr, _, err := net.ParseCIDR(addresses[0].String())
+
+	return ipv4Addr
 }
 
 func ip2int(ip net.IP) uint32 {
@@ -73,7 +87,10 @@ func connect_container(server_ip, container_name string) (string, uint64) {
 	// call syscall for ec_connect here
 	gcm_ip := ip2int(net.ParseIP(server_ip))
 	port := 4444
-	agentIP := ip2int(net.ParseIP("128.105.144.93"))
+	interfaceIP := getIpFromInterface(INTERFACE)
+	log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
+	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
+	agentIP := ip2int(interfaceIP)
 	_, _, err = syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcm_ip) , uintptr(port), uintptr(pid_int), uintptr(agentIP) , 0, 0)
 	
 	// log.Println("Docker Container id:", container_id)
@@ -127,7 +144,7 @@ func handleConnection(conn net.Conn) {
 		if err != nil {
 			log.Println("ERROR in reading Header: ", err.Error())
 		}
-		log.Println("[ProtoBuf] RX Message Body length: ", size)
+		//log.Println("[ProtoBuf] RX Message Body length: ", size)
 		// now, read the full Protobuf message
 		_, err = io.ReadFull(c, buff[:int(size)])
 		if err != nil {
@@ -143,6 +160,7 @@ func handleConnection(conn net.Conn) {
 		var ret uint64
 		var container_id string
 		var updated_quota uint64
+		log.Println("--------------- BEGIN NEW REQUEST ---------------")
 		switch rxMsg.GetReqType() {
 		case 0:
 			log.Println("CPU Request")
@@ -166,6 +184,7 @@ func handleConnection(conn net.Conn) {
 		default:
 			log.Println("[ERROR] Not going in the right way! request type is invalid!")
 		}
+		log.Println("--------------- END NEW REQUEST ---------------")
 
 		//log.Println("Docker Container id:", container_id)
 		//log.Println("Updated Quota", updated_quota)
@@ -183,11 +202,11 @@ func handleConnection(conn net.Conn) {
 		}
 
 		// Write to socket the message stream
-		length, err := conn.Write(txMsgMarshal)
+		_, err = conn.Write(txMsgMarshal)
 		if err != nil {
 			log.Println("[ERROR] in writing proto message to socket" + err.Error())
 		}
-		log.Printf("[PROTOBUF] TX  Message Body length: %d\n", length)
+		//log.Printf("[PROTOBUF] TX  Message Body length: %d\n", length)
 
 	}
 }
