@@ -29,6 +29,7 @@ const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 
 const INTERFACE = "eno1" // This could be changed
+//const INTERFACE = "enp0s3"
 
 func getIpFromInterface(inter string) net.IP {
 	byNameInterface, err := net.InterfaceByName(inter)
@@ -142,7 +143,11 @@ func handleConnection(conn net.Conn) {
 		// read a single byte which contains the message length at the beginning of the message
 		size, err := c.ReadByte()
 		if err != nil {
-			log.Println("ERROR in reading Header: ", err.Error())
+			if err.Error() == "EOF" {
+				break
+			} else {
+				log.Println("ERROR in reading Header: ", err.Error())
+			}
 		}
 		//log.Println("[ProtoBuf] RX Message Body length: ", size)
 		// now, read the full Protobuf message
