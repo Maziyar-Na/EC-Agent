@@ -1,4 +1,4 @@
-// Btw, the reason this has been written as one script as of now is because the code in main() will be inserted into 
+// Btw, the reason this has been written as one script as of now is because the code in main() will be inserted into
 // the kubelet and the rest of the file will be a standalone package
 
 package main
@@ -28,13 +28,13 @@ const INCREASE_MEM_CG_MARGIN_SYSCALL = 337
 const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 
-const INTERFACE = "eno1" // This could be changed
-//const INTERFACE = "enp0s3"
+//const INTERFACE = "eno1" // This could be changed
+const INTERFACE = "enp0s3"
 
 func getIpFromInterface(inter string) net.IP {
 	byNameInterface, err := net.InterfaceByName(inter)
 	if err != nil {
-			log.Println(err)
+		log.Println(err)
 	}
 	addresses, err := byNameInterface.Addrs()
 	// for k, v := range addresses {
@@ -52,9 +52,9 @@ func ip2int(ip net.IP) uint32 {
 	return binary.BigEndian.Uint32(ip)
 }
 
-func connect_container(server_ip, container_name string) (string, uint64) {
+func connectContainer(server_ip, container_name string) (string, uint64) {
 	log.Printf("[DBG] CONNECT CONTAINER: server_ip %s: , container name: %s\n", server_ip, container_name)
-	
+
 	// Heads up, this will change once it's integrated into kubelet (cuz kubelets check for alive pods/containers in a different way)
 	cmd := "sudo docker ps -a | grep k8s_" + container_name + " | awk '{print $1}'"
 	// Loops for max of 15 seconds or whenever it finds the container, whichever comes first
@@ -62,7 +62,7 @@ func connect_container(server_ip, container_name string) (string, uint64) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	for {
-    	out, err := exec.CommandContext(ctx, "/bin/sh",  "-c" , cmd).Output()
+		out, err := exec.CommandContext(ctx, "/bin/sh",  "-c" , cmd).Output()
 		if len(string(out)) > 0 {
 			container_id = string(out)
 			break
@@ -74,14 +74,14 @@ func connect_container(server_ip, container_name string) (string, uint64) {
 	container_id = strings.TrimSuffix(container_id, "\n")
 
 	cmd = "sudo docker inspect --format '{{ .State.Pid }}' " + container_id
-	out, err := exec.Command("/bin/sh", "-c", cmd).Output()  
+	out, err := exec.Command("/bin/sh", "-c", cmd).Output()
 	if err != nil {
 		return "ERROR in getting PID of container with id " + container_id + ": " + err.Error(), 1
 	}
 	pid := string(out)
 	pid = strings.TrimSuffix(pid, "\n")
 	pid_int, err := strconv.Atoi(pid)
-    if err != nil {
+	if err != nil {
 		return err.Error(), 1
 	}
 
@@ -93,45 +93,46 @@ func connect_container(server_ip, container_name string) (string, uint64) {
 	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
 	agentIP := ip2int(interfaceIP)
 	_, _, err = syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcm_ip) , uintptr(port), uintptr(pid_int), uintptr(agentIP) , 0, 0)
-	
+
 	// log.Println("Docker Container id:", container_id)
 	return container_id, 0
 }
 
-func handle_cpu_req(cgroup_id, quota uint64) (uint64, uint64) {
+func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
 	log.Printf("setting quota to: %d\n", quota)
+	var updatedQuota uint64
 	quotaMega := quota/1000
-	update_quota, _, _ := syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(cgroup_id), uintptr(quotaMega), 0)
-	new_quota := uint64(update_quota)
-
-	if new_quota == 1 {
-		log.Printf("Quota Set Failed\n")
-		return new_quota, 1
-	} 
-
-	log.Printf("Quota Set Success!\n")
-	log.Printf("ret: %d\n", new_quota)
-	return uint64(new_quota), 0
+	ret, _, _ := syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(cgroupId), uintptr(quotaMega), 0)
+	if ret == 1 {
+		log.Println("Quota Set Failed")
+		ret = 1
+		updatedQuota = 0
+	} else {
+		log.Println("Quota Set Success. set to: ", uint64(ret))
+		updatedQuota = uint64(ret)
+		ret = 0
+	}
+	return updatedQuota, uint64(ret)
 }
 
-func handle_mem_req(cgroup_id uint64) (uint64) {
-	log.Printf("cgroup_id: %d\n", cgroup_id)
-	avail_mem_ret, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroup_id), 0, 0)
+func handleMemReq(cgroupId int32) uint64 {
+	log.Printf("cgroup_id: %d\n", cgroupId)
+	avail_mem_ret, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroupId), 0, 0)
 	avail_mem := uint64(avail_mem_ret)
 
 	log.Printf("[INFO]: EC Agent: Reclaimed memory is: %d\n", avail_mem)
 	return avail_mem
 }
 
-func handle_resize_max_mem(cgroup_id uint64, new_limit uint64, is_memsw int) (uint64) {
-	log.Printf("setting new mem limit to: %d\n", new_limit)
-	avail_mem_ret, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroup_id), uintptr(new_limit), uintptr(is_memsw))
-	avail_mem := uint64(avail_mem_ret)
+func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int) uint64 {
+	log.Printf("setting new mem limit to: %d\n", newLimit)
+	availMemRet, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroupId), uintptr(newLimit), uintptr(isMemsw))
+	availMem := uint64(availMemRet)
 
-	if avail_mem == 0 {
-		log.Printf("[INFO]: EC Agent: resize_max_mem fails. Ret: %d \n", avail_mem)
+	if availMem == 0 {
+		log.Printf("[INFO]: EC Agent: resize_max_mem fails. Ret: %d \n", availMem)
 	}
-	return avail_mem
+	return availMem
 }
 
 func handleConnection(conn net.Conn) {
@@ -144,6 +145,7 @@ func handleConnection(conn net.Conn) {
 		size, err := c.ReadByte()
 		if err != nil {
 			if err.Error() == "EOF" {
+				log.Println("Connection killed by client")
 				break
 			} else {
 				log.Println("ERROR in reading Header: ", err.Error())
@@ -169,23 +171,23 @@ func handleConnection(conn net.Conn) {
 		switch rxMsg.GetReqType() {
 		case 0:
 			log.Println("CPU Request")
-			updated_quota, ret = handle_cpu_req(uint64(rxMsg.GetCgroupId()), rxMsg.GetQuota())
+			updated_quota, ret = handleCpuReq(rxMsg.GetCgroupId(), rxMsg.GetQuota())
 		case 1:
 			log.Println("Memory Request")
-			ret = handle_mem_req(uint64(rxMsg.GetCgroupId()))
+			ret = handleMemReq(rxMsg.GetCgroupId())
 		case 2:
 			log.Println("Init Request")
 		case 3:
 			log.Println("CPU SLICE")
-		case 4: 
-			container_id, ret = connect_container(rxMsg.GetClientIp(), rxMsg.GetPayloadString())
+		case 4:
+			container_id, ret = connectContainer(rxMsg.GetClientIp(), rxMsg.GetPayloadString())
 			if ret != 0 {
 				log.Println("[ERROR] Initial Container Connection failed...")
 				log.Println(container_id)
 			}
 		case 5:
 			log.Println("Handle RESIZE MAX/MIN")
-			ret = handle_resize_max_mem(uint64(rxMsg.GetCgroupId()), rxMsg.GetRsrcAmnt(), 0)
+			ret = handleResizeMaxMem(rxMsg.GetCgroupId(), rxMsg.GetRsrcAmnt(), 0)
 		default:
 			log.Println("[ERROR] Not going in the right way! request type is invalid!")
 		}
@@ -222,6 +224,7 @@ func main() {
 		log.Println(err)
 		return
 	}
+	log.Println("Listening on port: " + PORT)
 	for {
 		if conn, err := l.Accept(); err == nil {
 			go handleConnection(conn)
