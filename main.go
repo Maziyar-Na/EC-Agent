@@ -145,6 +145,7 @@ func handleConnection(conn net.Conn) {
 		size, err := c.ReadByte()
 		if err != nil {
 			if err.Error() == "EOF" {
+				log.Println("Connection killed by client")
 				break
 			} else {
 				log.Println("ERROR in reading Header: ", err.Error())
@@ -192,7 +193,6 @@ func handleConnection(conn net.Conn) {
 		}
 		log.Println("--------------- END NEW REQUEST ---------------")
 
-		log.Println("Seq num: ", rxMsg.GetRequest())
 		//log.Println("Docker Container id:", container_id)
 		//log.Println("Updated Quota", updated_quota)
 		txMsg := &msg_struct.ECMessage{
