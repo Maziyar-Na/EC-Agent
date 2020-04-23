@@ -52,50 +52,65 @@ func ip2int(ip net.IP) uint32 {
 	return binary.BigEndian.Uint32(ip)
 }
 
-func connectContainer(server_ip, container_name string) (string, uint64) {
-	log.Printf("[DBG] CONNECT CONTAINER: server_ip %s: , container name: %s\n", server_ip, container_name)
+func connectContainer(serverIp, containerName string) (string, uint64) {
+	log.Printf("[DBG] CONNECT CONTAINER: server_ip %s: , container name: %s\n", serverIp, containerName)
 
 	// Heads up, this will change once it's integrated into kubelet (cuz kubelets check for alive pods/containers in a different way)
-	cmd := "sudo docker ps -a | grep k8s_" + container_name + " | awk '{print $1}'"
-	// Loops for max of 15 seconds or whenever it finds the container, whichever comes first
-	var container_id string
+	//cmdForState := "kubectl get pods | grep " + containerName + " | awk '{print $3}'"
+	//// Loops for max of 15 seconds or whenever it finds the container, whichever comes first
+	//ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	//defer cancel()
+	//for {
+	//	out, err := exec.CommandContext(ctx, "/bin/sh",  "-c" , cmdForState).Output()
+	//	if len(string(out)) > 0 && string(out) == "Running\n" {
+	//		println("pod state: ", string(out))
+	//		break
+	//	}
+	//	if ctx.Err() != nil {
+	//		return "Error in finding pod: " + err.Error(), 1
+	//	}
+	//}
+
+	cmdForDockId := "sudo docker ps -a | grep k8s_" + containerName + " | awk '{print $1}'"
+	var containerId string
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	for {
-		out, err := exec.CommandContext(ctx, "/bin/sh",  "-c" , cmd).Output()
+		out, err := exec.CommandContext(ctx, "/bin/sh",  "-c" , cmdForDockId).Output()
+		//println("container id: ", string(out))
 		if len(string(out)) > 0 {
-			container_id = string(out)
+			containerId = string(out)
 			break
 		}
-		if (ctx.Err() != nil) {
+		if ctx.Err() != nil {
 			return "Error in finding container: " + err.Error(), 1
 		}
 	}
-	container_id = strings.TrimSuffix(container_id, "\n")
+	containerId = strings.TrimSuffix(containerId, "\n")
 
-	cmd = "sudo docker inspect --format '{{ .State.Pid }}' " + container_id
+	cmd := "sudo docker inspect --format '{{ .State.Pid }}' " + containerId
 	out, err := exec.Command("/bin/sh", "-c", cmd).Output()
 	if err != nil {
-		return "ERROR in getting PID of container with id " + container_id + ": " + err.Error(), 1
+		return "ERROR in getting PID of container with id " + containerId + ": " + err.Error(), 1
 	}
 	pid := string(out)
 	pid = strings.TrimSuffix(pid, "\n")
-	pid_int, err := strconv.Atoi(pid)
+	pidInt, err := strconv.Atoi(pid)
 	if err != nil {
 		return err.Error(), 1
 	}
 
 	// call syscall for ec_connect here
-	gcm_ip := ip2int(net.ParseIP(server_ip))
+	gcmIp := ip2int(net.ParseIP(serverIp))
 	port := 4444
 	interfaceIP := getIpFromInterface(INTERFACE)
 	log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
 	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
 	agentIP := ip2int(interfaceIP)
-	_, _, err = syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcm_ip) , uintptr(port), uintptr(pid_int), uintptr(agentIP) , 0, 0)
+	_, _, err = syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port), uintptr(pidInt), uintptr(agentIP) , 0, 0)
 
 	// log.Println("Docker Container id:", container_id)
-	return container_id, 0
+	return containerId, 0
 }
 
 func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
