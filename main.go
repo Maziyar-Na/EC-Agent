@@ -268,13 +268,13 @@ func handleConnection(conn net.Conn) {
 		case 3:
 			log.Println("CPU SLICE")
 		case 4:
-			go connectContainerGo(conn, rxMsg)
-			continue
-			//container_id, ret = connectContainer(rxMsg.GetClientIp(), rxMsg.GetPayloadString())
-			//if ret != 0 {
-			//	log.Println("[ERROR] Initial Container Connection failed...")
-			//	log.Println(container_id)
-			//}
+			//go connectContainerGo(conn, rxMsg)
+			//continue
+			container_id, ret = connectContainer(rxMsg.GetClientIp(), rxMsg.GetPayloadString())
+			if ret != 0 {
+				log.Println("[ERROR] Initial Container Connection failed...")
+				log.Println(container_id)
+			}
 		case 5:
 			log.Println("Handle RESIZE MAX/MIN")
 			ret = handleResizeMaxMem(rxMsg.GetCgroupId(), rxMsg.GetRsrcAmnt(), 0)
