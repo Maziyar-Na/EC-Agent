@@ -9,5 +9,5 @@ message ECMessage {
     uint32 request = 5;
     int32 runtime_remaining = 6;
     uint64 quota = 7;
-    `string payload_string = 16;
+    string payload_string = 16;
 }
