@@ -4,19 +4,20 @@
 package main
 
 import (
+	"bufio"
+	"context"
+	"encoding/binary"
+	"fmt"
+	"github.com/Maziyar-Na/EC-Agent/msg"
+	"github.com/golang/protobuf/proto"
+	"io"
 	"log"
 	"net"
-	"bufio"
-	"io"
-	"github.com/golang/protobuf/proto"
-	"github.com/Maziyar-Na/EC-Agent/msg"
 	"os/exec"
-	"time"
-	"context"
-	"syscall"
 	"strconv"
 	"strings"
-	"encoding/binary"
+	"syscall"
+	"time"
 )
 
 const MAXGCMNO = 30
@@ -226,9 +227,9 @@ func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int) uint64 {
 func handleConnection(conn net.Conn) {
 	log.Printf("[DBG] Server: New fd created for new connection. Serving %s\n", conn.RemoteAddr().String())
 	for {
+		defer conn.Close()
 		buff := make([]byte, BUFFSIZE)
 		c := bufio.NewReader(conn)
-		defer conn.Close()
 		// read a single byte which contains the message length at the beginning of the message
 		size, err := c.ReadByte()
 		if err != nil {
@@ -239,17 +240,29 @@ func handleConnection(conn net.Conn) {
 				log.Println("ERROR in reading Header: ", err.Error())
 			}
 		}
-		//log.Println("[ProtoBuf] RX Message Body length: ", size)
+		log.Println("[ProtoBuf] RX Message Body length: ", size)
 		// now, read the full Protobuf message
 		_, err = io.ReadFull(c, buff[:int(size)])
-		if err != nil {
-			log.Println("ERROR in reading Body: ", err.Error())
-		}
-		rxMsg := &msg_struct.ECMessage{}
+		//n,err := conn.Read(buff)
+		//if err != nil {
+		//	log.Println("ERROR in reading Body: ", err.Error())
+		//	if err.Error() == "EOF" {
+		//		log.Println("Connection killed by client")
+		//		break
+		//	} else {
+		//		log.Println("ERROR in reading Header: ", err.Error())
+		//	}
+		//}
+		//fmt.Println("Size read in: " + string(n))
+		rxMsg := new(msg_struct.ECMessage)
+		//rxMsg := &msg_struct.ECMessage{}
+		//err = proto.Unmarshal(buff[:n], rxMsg)
 		err = proto.Unmarshal(buff[:size], rxMsg)
 		if err != nil {
 			log.Println("ERROR in ProtoBuff - UnMarshaling: ", err.Error())
 		}
+		fmt.Println(rxMsg)
+		fmt.Println(rxMsg.GetReqType())
 
 		// log.Println("Recieved message req type: ", rxMsg.GetReqType())
 		var ret uint64
