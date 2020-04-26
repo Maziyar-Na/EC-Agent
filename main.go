@@ -4,13 +4,11 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"encoding/binary"
 	"fmt"
 	"github.com/Maziyar-Na/EC-Agent/msg"
 	"github.com/golang/protobuf/proto"
-	"io"
 	"log"
 	"net"
 	"os/exec"
@@ -229,23 +227,10 @@ func handleConnection(conn net.Conn) {
 	for {
 		defer conn.Close()
 		buff := make([]byte, BUFFSIZE)
-		c := bufio.NewReader(conn)
-		// read a single byte which contains the message length at the beginning of the message
-		size, err := c.ReadByte()
-		if err != nil {
-			if err.Error() == "EOF" {
-				log.Println("Connection killed by client")
-				break
-			} else {
-				log.Println("ERROR in reading Header: ", err.Error())
-			}
-		}
-		log.Println("[ProtoBuf] RX Message Body length: ", size)
-		// now, read the full Protobuf message
-		_, err = io.ReadFull(c, buff[:int(size)])
-		//n,err := conn.Read(buff)
+		//c := bufio.NewReader(conn)
+		//// read a single byte which contains the message length at the beginning of the message
+		//size, err := c.ReadByte()
 		//if err != nil {
-		//	log.Println("ERROR in reading Body: ", err.Error())
 		//	if err.Error() == "EOF" {
 		//		log.Println("Connection killed by client")
 		//		break
@@ -253,11 +238,24 @@ func handleConnection(conn net.Conn) {
 		//		log.Println("ERROR in reading Header: ", err.Error())
 		//	}
 		//}
-		//fmt.Println("Size read in: " + string(n))
+		//log.Println("[ProtoBuf] RX Message Body length: ", size)
+		//// now, read the full Protobuf message
+		//_, err = io.ReadFull(c, buff[:int(size)])
+		n,err := conn.Read(buff)
+		if err != nil {
+			log.Println("ERROR in reading Body: ", err.Error())
+			if err.Error() == "EOF" {
+				log.Println("Connection killed by client")
+				break
+			} else {
+				log.Println("ERROR in reading Header: ", err.Error())
+			}
+		}
+		fmt.Println("Size read in: " + string(n))
 		rxMsg := new(msg_struct.ECMessage)
 		//rxMsg := &msg_struct.ECMessage{}
-		//err = proto.Unmarshal(buff[:n], rxMsg)
-		err = proto.Unmarshal(buff[:size], rxMsg)
+		err = proto.Unmarshal(buff[:n], rxMsg)
+		//err = proto.Unmarshal(buff[:size], rxMsg)
 		if err != nil {
 			log.Println("ERROR in ProtoBuff - UnMarshaling: ", err.Error())
 		}
