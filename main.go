@@ -278,6 +278,8 @@ func handleConnection(conn net.Conn) {
 		case 5:
 			log.Println("Handle RESIZE MAX/MIN")
 			ret = handleResizeMaxMem(rxMsg.GetCgroupId(), rxMsg.GetRsrcAmnt(), 0)
+		case 6:
+			log.Println("Handle deployer request to return docker id and cgroup id of container")
 		default:
 			log.Println("[ERROR] Not going in the right way! request type is invalid!")
 		}
