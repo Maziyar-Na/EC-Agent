@@ -12,14 +12,13 @@ service Handler {
 
 // The request message containing the user's name.
 message ContainerRequest {
-  string clientIP = 1;
+  string gcmIP = 1;
   string podName = 2;
 }
 
 // The response message containing the greetings
 message ContainerReply {
-  string clientIP = 1;
-  string podName = 2;
-  string dockerID = 3;
-  int32 cgroupID = 4;
+  string podName = 1;
+  string dockerID = 2;
+  int32 cgroupID = 3;
 }

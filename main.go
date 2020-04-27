@@ -7,9 +7,10 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	pb "github.com/Maziyar-Na/EC-Agent/grpc"
 	"github.com/Maziyar-Na/EC-Agent/msg"
-	"github.com/Maziyar-Na/EC-Agent/grpc"
 	"github.com/golang/protobuf/proto"
+	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os/exec"
@@ -30,6 +31,10 @@ const READ_QUOTA_SYSCALL = 339
 
 //const INTERFACE = "eno1" // This could be changed
 const INTERFACE = "enp0s3"
+
+type server struct {
+	pb.UnimplementedHandlerServer
+}
 
 func getIpFromInterface(inter string) net.IP {
 	byNameInterface, err := net.InterfaceByName(inter)
@@ -52,7 +57,7 @@ func ip2int(ip net.IP) uint32 {
 	return binary.BigEndian.Uint32(ip)
 }
 
-func connectContainer(serverIp, containerName string) (string, uint64) {
+func connectContainer(serverIp, containerName string) (string, int32, uint64) {
 	log.Printf("[DBG] CONNECT CONTAINER: server_ip %s: , container name: %s\n", serverIp, containerName)
 	cmdForDockId := "sudo docker ps -a | grep k8s_" + containerName + " | awk '{print $1}'"
 	var containerId string
@@ -66,22 +71,24 @@ func connectContainer(serverIp, containerName string) (string, uint64) {
 			break
 		}
 		if ctx.Err() != nil {
-			return "Error in finding container: " + err.Error(), 1
+			return "Error in finding container: " + err.Error(), 0, 1
 		}
 	}
 	containerId = strings.TrimSuffix(containerId, "\n")
-
+	log.Println("got container id!: " + containerId)
 	cmd := "sudo docker inspect --format '{{ .State.Pid }}' " + containerId
 	out, err := exec.Command("/bin/sh", "-c", cmd).Output()
 	if err != nil {
-		return "ERROR in getting PID of container with id " + containerId + ": " + err.Error(), 1
+		return "ERROR in getting PID of container with id " + containerId + ": " + err.Error(), 0, 1
 	}
 	pid := string(out)
 	pid = strings.TrimSuffix(pid, "\n")
 	pidInt, err := strconv.Atoi(pid)
 	if err != nil {
-		return err.Error(), 1
+		return err.Error(), 0, 1
 	}
+
+	log.Println("got pid: " + pid)
 
 	// call syscall for ec_connect here
 	gcmIp := ip2int(net.ParseIP(serverIp))
@@ -90,239 +97,36 @@ func connectContainer(serverIp, containerName string) (string, uint64) {
 	log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
 	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
 	agentIP := ip2int(interfaceIP)
-	_, _, err = syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port), uintptr(pidInt), uintptr(agentIP) , 0, 0)
+	cgId, _, err := syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port), uintptr(pidInt), uintptr(agentIP) , 0, 0)
 
-	// log.Println("Docker Container id:", container_id)
-	return containerId, 0
+	log.Println("Docker Container id: " + containerId + ", cgroupId: " + string(cgId))
+	return containerId, int32(cgId), 0
 }
 
-//func connectContainerGo(conn net.Conn, rxMsg *msg_struct.ECMessage) {
-//	serverIp := rxMsg.GetClientIp()
-//	containerName := rxMsg.GetPayloadString()
-//	var ret uint64
-//	ret = 0
-//	log.Printf("[DBG] CONNECT CONTAINER: server_ip %s: , container name: %s\n", serverIp, containerName)
-//
-//	//// Heads up, this will change once it's integrated into kubelet (cuz kubelets check for alive pods/containers in a different way)
-//	//cmdForState := "kubectl get pods | grep " + containerName + " | awk '{print $3}'"
-//	//// Loops for max of 15 seconds or whenever it finds the container, whichever comes first
-//	//ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-//	//defer cancel()
-//	//for {
-//	//	out, err := exec.CommandContext(ctx, "/bin/sh",  "-c" , cmdForState).Output()
-//	//	println("pod state: ", string(out))
-//	//	if len(string(out)) > 0 && string(out) == "Running\n" {
-//	//		println("pod state: ", string(out))
-//	//		break
-//	//	}
-//	//	if ctx.Err() != nil {
-//	//		log.Println("Error in finding pod: " + err.Error())
-//	//		ret = 1
-//	//	}
-//	//}
-//
-//	cmdForDockId := "sudo docker ps -a | grep k8s_" + containerName + " | awk '{print $1}'"
-//	var containerId string
-//	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-//	defer cancel()
-//	for {
-//		out, err := exec.CommandContext(ctx, "/bin/sh",  "-c" , cmdForDockId).Output()
-//		//println("container id: ", string(out))
-//		if len(string(out)) > 0 {
-//			containerId = string(out)
-//			break
-//		}
-//		if ctx.Err() != nil {
-//			log.Println("Error in finding container: " + err.Error())
-//			ret = 1
-//		}
-//	}
-//	containerId = strings.TrimSuffix(containerId, "\n")
-//
-//	cmd := "sudo docker inspect --format '{{ .State.Pid }}' " + containerId
-//	out, err := exec.Command("/bin/sh", "-c", cmd).Output()
-//	if err != nil {
-//		log.Println("ERROR in getting PID of container with id " + containerId + ": " + err.Error())
-//		ret = 1
-//	}
-//	pid := string(out)
-//	pid = strings.TrimSuffix(pid, "\n")
-//	pidInt, err := strconv.Atoi(pid)
-//	if err != nil {
-//		log.Println(err.Error())
-//		ret = 1
-//	}
-//
-//	// call syscall for ec_connect here
-//	gcmIp := ip2int(net.ParseIP(serverIp))
-//	port := 4444
-//	interfaceIP := getIpFromInterface(INTERFACE)
-//	log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
-//	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
-//	agentIP := ip2int(interfaceIP)
-//	_, _, err = syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port), uintptr(pidInt), uintptr(agentIP) , 0, 0)
-//
-//	// log.Println("Docker Container id:", container_id)
-//	//return containerId, 0
-//
-//	txMsg := &msg_struct.ECMessage{
-//		ReqType: proto.Int32(rxMsg.GetReqType()),
-//		RsrcAmnt: proto.Uint64(ret),
-//		Quota: proto.Uint64(0),
-//		PayloadString: proto.String(containerId),
-//		Request: proto.Uint32(rxMsg.GetRequest()),
-//	}
-//
-//	txMsgMarshal, err := proto.Marshal(txMsg)
-//	if err != nil {
-//		log.Fatal("TX Data marshaling error: ", err)
-//	}
-//
-//	// Write to socket the message stream
-//	_, err = conn.Write(txMsgMarshal)
-//	if err != nil {
-//		log.Println("[ERROR] in writing proto message to socket" + err.Error())
-//	}
-//}
-//
 
-func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
-	log.Printf("setting quota to: %d\n", quota)
-	var updatedQuota uint64
-	quotaMega := quota/1000
-	ret, _, _ := syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(cgroupId), uintptr(quotaMega), 0)
-	if ret == 1 {
-		log.Println("Quota Set Failed")
-		ret = 1
-		updatedQuota = 0
-	} else {
-		log.Println("Quota Set Success. set to: ", uint64(ret))
-		updatedQuota = uint64(ret)
-		ret = 0
+
+func ConnectContainerGrpc(clientIP, )
+
+// ReqContainerInfo implements agent.HandlerServer
+func (s *server) ReqContainerInfo(ctx context.Context, in *pb.ContainerRequest) (*pb.ContainerReply, error) {
+	log.Printf("Received: %v, %v", in.GetGcmIP(), in.GetPodName())
+	containerId, cgId, ret := connectContainer(in.GetGcmIP(), in.GetPodName())
+	if ret != 0 {
+		log.Println("[ERROR] Initial Container Connection failed...")
+		log.Println(containerId)
 	}
-	return updatedQuota, uint64(ret)
-}
+	return &pb.ContainerReply{
+		PodName: in.GetPodName(),
+		DockerID: containerId,
+		CgroupID: cgId,
+	}, nil
 
-func handleMemReq(cgroupId int32) uint64 {
-	log.Printf("cgroup_id: %d\n", cgroupId)
-	avail_mem_ret, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroupId), 0, 0)
-	avail_mem := uint64(avail_mem_ret)
-
-	log.Printf("[INFO]: EC Agent: Reclaimed memory is: %d\n", avail_mem)
-	return avail_mem
-}
-
-func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int) uint64 {
-	log.Printf("setting new mem limit to: %d\n", newLimit)
-	availMemRet, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroupId), uintptr(newLimit), uintptr(isMemsw))
-	availMem := uint64(availMemRet)
-
-	if availMem == 0 {
-		log.Printf("[INFO]: EC Agent: resize_max_mem fails. Ret: %d \n", availMem)
-	}
-	return availMem
-}
-
-func handleConnection(conn net.Conn) {
-	log.Printf("[DBG] Server: New fd created for new connection. Serving %s\n", conn.RemoteAddr().String())
-	for {
-		defer conn.Close()
-		buff := make([]byte, BUFFSIZE)
-		//c := bufio.NewReader(conn)
-		//// read a single byte which contains the message length at the beginning of the message
-		//size, err := c.ReadByte()
-		//if err != nil {
-		//	if err.Error() == "EOF" {
-		//		log.Println("Connection killed by client")
-		//		break
-		//	} else {
-		//		log.Println("ERROR in reading Header: ", err.Error())
-		//	}
-		//}
-		//log.Println("[ProtoBuf] RX Message Body length: ", size)
-		//// now, read the full Protobuf message
-		//_, err = io.ReadFull(c, buff[:int(size)])
-		n,err := conn.Read(buff)
-		if err != nil {
-			log.Println("ERROR in reading Body: ", err.Error())
-			if err.Error() == "EOF" {
-				log.Println("Connection killed by client")
-				break
-			} else if strings.Contains(err.Error(), "connection reset by peer") {
-				log.Println("Connection killed by client")
-				break
-			} else {
-				log.Println("ERROR in reading Header: ", err.Error())
-			}
-		}
-		fmt.Println("Size read in: " + string(n))
-		rxMsg := new(msg_struct.ECMessage)
-		//rxMsg := &msg_struct.ECMessage{}
-		err = proto.Unmarshal(buff[:n], rxMsg)
-		//err = proto.Unmarshal(buff[:size], rxMsg)
-		if err != nil {
-			log.Println("ERROR in ProtoBuff - UnMarshaling: ", err.Error())
-		}
-		fmt.Println(rxMsg)
-		fmt.Println(rxMsg.GetReqType())
-
-		// log.Println("Recieved message req type: ", rxMsg.GetReqType())
-		var ret uint64
-		var container_id string
-		var updated_quota uint64
-		log.Println("--------------- BEGIN NEW REQUEST ---------------")
-		switch rxMsg.GetReqType() {
-		case 0:
-			log.Println("CPU Request")
-			updated_quota, ret = handleCpuReq(rxMsg.GetCgroupId(), rxMsg.GetQuota())
-		case 1:
-			log.Println("Memory Request")
-			ret = handleMemReq(rxMsg.GetCgroupId())
-		case 2:
-			log.Println("Init Request")
-		case 3:
-			log.Println("CPU SLICE")
-		case 4:
-			//go connectContainerGo(conn, rxMsg)
-			//continue
-			container_id, ret = connectContainer(rxMsg.GetClientIp(), rxMsg.GetPayloadString())
-			if ret != 0 {
-				log.Println("[ERROR] Initial Container Connection failed...")
-				log.Println(container_id)
-			}
-		case 5:
-			log.Println("Handle RESIZE MAX/MIN")
-			ret = handleResizeMaxMem(rxMsg.GetCgroupId(), rxMsg.GetRsrcAmnt(), 0)
-		case 6:
-			log.Println("Handle deployer request to return docker id and cgroup id of container")
-		default:
-			log.Println("[ERROR] Not going in the right way! request type is invalid!")
-		}
-		log.Println("--------------- END NEW REQUEST ---------------")
-
-		//log.Println("Docker Container id:", container_id)
-		//log.Println("Updated Quota", updated_quota)
-		txMsg := &msg_struct.ECMessage{
-			ReqType: rxMsg.GetReqType(),
-			RsrcAmnt: ret,
-			Quota: updated_quota,
-			PayloadString: container_id,
-			Request: rxMsg.GetRequest(),
-		}
-
-		txMsgMarshal, err := proto.Marshal(txMsg)
-		if err != nil {
-			log.Fatal("TX Data marshaling error: ", err)
-		}
-
-		// Write to socket the message stream
-		_, err = conn.Write(txMsgMarshal)
-		if err != nil {
-			log.Println("[ERROR] in writing proto message to socket" + err.Error())
-		}
-		//log.Printf("[PROTOBUF] TX  Message Body length: %d\n", length)
-
-	}
+	//return &pb.ContainerReply{
+	//	ClientIP: "YO:" + in.GetClientIP(),
+	//	PodName:"POD_NAME: " + in.GetPodName(),
+	//	DockerID: "DOCKER_ID",
+	//	CgroupID: 23,
+	//}, nil
 }
 
 func main() {
@@ -331,10 +135,10 @@ func main() {
 		log.Println(err)
 		return
 	}
-	log.Println("Listening on port: " + PORT)
-	for {
-		if conn, err := l.Accept(); err == nil {
-			go handleConnection(conn)
-		}
+	s := grpc.NewServer()
+	pb.RegisterHandlerServer(s, &server{})
+	if err := s.Serve(l); err != nil {
+		log.Fatalf("failed to serve: %v", err)
 	}
+
 }
