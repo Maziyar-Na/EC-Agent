@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/Maziyar-Na/EC-Agent/msg"
+	"github.com/Maziyar-Na/EC-Agent/grpc"
 	"github.com/golang/protobuf/proto"
 	"log"
 	"net"
@@ -245,6 +246,9 @@ func handleConnection(conn net.Conn) {
 		if err != nil {
 			log.Println("ERROR in reading Body: ", err.Error())
 			if err.Error() == "EOF" {
+				log.Println("Connection killed by client")
+				break
+			} else if strings.Contains(err.Error(), "connection reset by peer") {
 				log.Println("Connection killed by client")
 				break
 			} else {

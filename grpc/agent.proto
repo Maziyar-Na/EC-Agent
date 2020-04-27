@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option go_package = ".;agentcomm";
+
+package agentcomm;
+
+// The greeting service definition.
+service Handler {
+  // Sends a greeting
+  rpc ReqContainerInfo (ContainerRequest) returns (ContainerReply) {}
+}
+
+// The request message containing the user's name.
+message ContainerRequest {
+  string clientIP = 1;
+  string podName = 2;
+}
+
+// The response message containing the greetings
+message ContainerReply {
+  string clientIP = 1;
+  string podName = 2;
+  string dockerID = 3;
+  int32 cgroupID = 4;
+}
