@@ -6,10 +6,7 @@ package main
 import (
 	"context"
 	"encoding/binary"
-	"fmt"
 	pb "github.com/Maziyar-Na/EC-Agent/grpc"
-	"github.com/Maziyar-Na/EC-Agent/msg"
-	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -105,7 +102,7 @@ func connectContainer(serverIp, containerName string) (string, int32, uint64) {
 
 
 
-func ConnectContainerGrpc(clientIP, )
+//func ConnectContainerGrpc(clientIP, )
 
 // ReqContainerInfo implements agent.HandlerServer
 func (s *server) ReqContainerInfo(ctx context.Context, in *pb.ContainerRequest) (*pb.ContainerReply, error) {
