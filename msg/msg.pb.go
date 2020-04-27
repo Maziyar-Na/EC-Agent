@@ -30,14 +30,14 @@ type ECMessage struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ClientIp         *string `protobuf:"bytes,1,opt,name=client_ip,json=clientIp" json:"client_ip,omitempty"`
-	CgroupId         *int32  `protobuf:"varint,2,opt,name=cgroup_id,json=cgroupId" json:"cgroup_id,omitempty"`
-	ReqType          *int32  `protobuf:"varint,3,opt,name=req_type,json=reqType" json:"req_type,omitempty"`
-	RsrcAmnt         *uint64 `protobuf:"varint,4,opt,name=rsrc_amnt,json=rsrcAmnt" json:"rsrc_amnt,omitempty"`
-	Request          *uint32 `protobuf:"varint,5,opt,name=request" json:"request,omitempty"`
-	RuntimeRemaining *int32  `protobuf:"varint,6,opt,name=runtime_remaining,json=runtimeRemaining" json:"runtime_remaining,omitempty"`
-	Quota            *uint64 `protobuf:"varint,7,opt,name=quota" json:"quota,omitempty"`
-	PayloadString    *string `protobuf:"bytes,16,opt,name=payload_string,json=payloadString" json:"payload_string,omitempty"`
+	ClientIp         string `protobuf:"bytes,1,opt,name=client_ip,json=clientIp,proto3" json:"client_ip,omitempty"`
+	CgroupId         int32  `protobuf:"varint,2,opt,name=cgroup_id,json=cgroupId,proto3" json:"cgroup_id,omitempty"`
+	ReqType          int32  `protobuf:"varint,3,opt,name=req_type,json=reqType,proto3" json:"req_type,omitempty"`
+	RsrcAmnt         uint64 `protobuf:"varint,4,opt,name=rsrc_amnt,json=rsrcAmnt,proto3" json:"rsrc_amnt,omitempty"`
+	Request          uint32 `protobuf:"varint,5,opt,name=request,proto3" json:"request,omitempty"`
+	RuntimeRemaining int32  `protobuf:"varint,6,opt,name=runtime_remaining,json=runtimeRemaining,proto3" json:"runtime_remaining,omitempty"`
+	Quota            uint64 `protobuf:"varint,7,opt,name=quota,proto3" json:"quota,omitempty"`
+	PayloadString    string `protobuf:"bytes,16,opt,name=payload_string,json=payloadString,proto3" json:"payload_string,omitempty"`
 }
 
 func (x *ECMessage) Reset() {
@@ -73,57 +73,57 @@ func (*ECMessage) Descriptor() ([]byte, []int) {
 }
 
 func (x *ECMessage) GetClientIp() string {
-	if x != nil && x.ClientIp != nil {
-		return *x.ClientIp
+	if x != nil {
+		return x.ClientIp
 	}
 	return ""
 }
 
 func (x *ECMessage) GetCgroupId() int32 {
-	if x != nil && x.CgroupId != nil {
-		return *x.CgroupId
+	if x != nil {
+		return x.CgroupId
 	}
 	return 0
 }
 
 func (x *ECMessage) GetReqType() int32 {
-	if x != nil && x.ReqType != nil {
-		return *x.ReqType
+	if x != nil {
+		return x.ReqType
 	}
 	return 0
 }
 
 func (x *ECMessage) GetRsrcAmnt() uint64 {
-	if x != nil && x.RsrcAmnt != nil {
-		return *x.RsrcAmnt
+	if x != nil {
+		return x.RsrcAmnt
 	}
 	return 0
 }
 
 func (x *ECMessage) GetRequest() uint32 {
-	if x != nil && x.Request != nil {
-		return *x.Request
+	if x != nil {
+		return x.Request
 	}
 	return 0
 }
 
 func (x *ECMessage) GetRuntimeRemaining() int32 {
-	if x != nil && x.RuntimeRemaining != nil {
-		return *x.RuntimeRemaining
+	if x != nil {
+		return x.RuntimeRemaining
 	}
 	return 0
 }
 
 func (x *ECMessage) GetQuota() uint64 {
-	if x != nil && x.Quota != nil {
-		return *x.Quota
+	if x != nil {
+		return x.Quota
 	}
 	return 0
 }
 
 func (x *ECMessage) GetPayloadString() string {
-	if x != nil && x.PayloadString != nil {
-		return *x.PayloadString
+	if x != nil {
+		return x.PayloadString
 	}
 	return ""
 }
@@ -148,7 +148,8 @@ var file_msg_proto_rawDesc = []byte{
 	0x0a, 0x05, 0x71, 0x75, 0x6f, 0x74, 0x61, 0x18, 0x07, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x71,
 	0x75, 0x6f, 0x74, 0x61, 0x12, 0x25, 0x0a, 0x0e, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x5f,
 	0x73, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x18, 0x10, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x70, 0x61,
-	0x79, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67,
+	0x79, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
