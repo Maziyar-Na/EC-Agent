@@ -151,7 +151,7 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 //func ConnectContainerGrpc(clientIP, )
 
 // ReqContainerInfo implements agent.HandlerServer
-func (s *server) ReqContainerInfo(ctx context.Context, in *pb.ContainerRequest) (*pb.ContainerReply, error) {
+func (s *server) ReqContainerInfo(ctx context.Context, in *pb.ConnectContainerRequest) (*pb.ConnectContainerReply, error) {
 	log.Printf("Received: %v, %v", in.GetGcmIP(), in.GetPodName())
 	pod := GetPodFromName(in.GetPodName())
 	dockerId := GetDockerId(pod)
@@ -166,7 +166,7 @@ func (s *server) ReqContainerInfo(ctx context.Context, in *pb.ContainerRequest) 
 		log.Println()
 	}
 
-	return &pb.ContainerReply{
+	return &pb.ConnectContainerReply{
 		PodName: in.GetPodName(),
 		DockerID: dockerId,
 		CgroupID: cgroupId,
