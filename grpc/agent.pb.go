@@ -30,7 +30,7 @@ const (
 const _ = proto.ProtoPackageIsVersion4
 
 // The request message containing the user's name.
-type ContainerRequest struct {
+type ConnectContainerRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -39,8 +39,8 @@ type ContainerRequest struct {
 	PodName string `protobuf:"bytes,2,opt,name=podName,proto3" json:"podName,omitempty"`
 }
 
-func (x *ContainerRequest) Reset() {
-	*x = ContainerRequest{}
+func (x *ConnectContainerRequest) Reset() {
+	*x = ConnectContainerRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_agent_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -48,13 +48,13 @@ func (x *ContainerRequest) Reset() {
 	}
 }
 
-func (x *ContainerRequest) String() string {
+func (x *ConnectContainerRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ContainerRequest) ProtoMessage() {}
+func (*ConnectContainerRequest) ProtoMessage() {}
 
-func (x *ContainerRequest) ProtoReflect() protoreflect.Message {
+func (x *ConnectContainerRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_agent_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -66,19 +66,19 @@ func (x *ContainerRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ContainerRequest.ProtoReflect.Descriptor instead.
-func (*ContainerRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ConnectContainerRequest.ProtoReflect.Descriptor instead.
+func (*ConnectContainerRequest) Descriptor() ([]byte, []int) {
 	return file_agent_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *ContainerRequest) GetGcmIP() string {
+func (x *ConnectContainerRequest) GetGcmIP() string {
 	if x != nil {
 		return x.GcmIP
 	}
 	return ""
 }
 
-func (x *ContainerRequest) GetPodName() string {
+func (x *ConnectContainerRequest) GetPodName() string {
 	if x != nil {
 		return x.PodName
 	}
@@ -86,7 +86,7 @@ func (x *ContainerRequest) GetPodName() string {
 }
 
 // The response message containing the greetings
-type ContainerReply struct {
+type ConnectContainerReply struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -96,8 +96,8 @@ type ContainerReply struct {
 	CgroupID int32  `protobuf:"varint,3,opt,name=cgroupID,proto3" json:"cgroupID,omitempty"`
 }
 
-func (x *ContainerReply) Reset() {
-	*x = ContainerReply{}
+func (x *ConnectContainerReply) Reset() {
+	*x = ConnectContainerReply{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_agent_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -105,13 +105,13 @@ func (x *ContainerReply) Reset() {
 	}
 }
 
-func (x *ContainerReply) String() string {
+func (x *ConnectContainerReply) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ContainerReply) ProtoMessage() {}
+func (*ConnectContainerReply) ProtoMessage() {}
 
-func (x *ContainerReply) ProtoReflect() protoreflect.Message {
+func (x *ConnectContainerReply) ProtoReflect() protoreflect.Message {
 	mi := &file_agent_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -123,26 +123,26 @@ func (x *ContainerReply) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ContainerReply.ProtoReflect.Descriptor instead.
-func (*ContainerReply) Descriptor() ([]byte, []int) {
+// Deprecated: Use ConnectContainerReply.ProtoReflect.Descriptor instead.
+func (*ConnectContainerReply) Descriptor() ([]byte, []int) {
 	return file_agent_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ContainerReply) GetPodName() string {
+func (x *ConnectContainerReply) GetPodName() string {
 	if x != nil {
 		return x.PodName
 	}
 	return ""
 }
 
-func (x *ContainerReply) GetDockerID() string {
+func (x *ConnectContainerReply) GetDockerID() string {
 	if x != nil {
 		return x.DockerID
 	}
 	return ""
 }
 
-func (x *ContainerReply) GetCgroupID() int32 {
+func (x *ConnectContainerReply) GetCgroupID() int32 {
 	if x != nil {
 		return x.CgroupID
 	}
@@ -153,24 +153,26 @@ var File_agent_proto protoreflect.FileDescriptor
 
 var file_agent_proto_rawDesc = []byte{
 	0x0a, 0x0b, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x09, 0x61,
-	0x67, 0x65, 0x6e, 0x74, 0x63, 0x6f, 0x6d, 0x6d, 0x22, 0x42, 0x0a, 0x10, 0x43, 0x6f, 0x6e, 0x74,
-	0x61, 0x69, 0x6e, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05,
-	0x67, 0x63, 0x6d, 0x49, 0x50, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x67, 0x63, 0x6d,
-	0x49, 0x50, 0x12, 0x18, 0x0a, 0x07, 0x70, 0x6f, 0x64, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x07, 0x70, 0x6f, 0x64, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x62, 0x0a, 0x0e,
-	0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x12, 0x18,
-	0x0a, 0x07, 0x70, 0x6f, 0x64, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x07, 0x70, 0x6f, 0x64, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x64, 0x6f, 0x63, 0x6b,
-	0x65, 0x72, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x64, 0x6f, 0x63, 0x6b,
-	0x65, 0x72, 0x49, 0x44, 0x12, 0x1a, 0x0a, 0x08, 0x63, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x49, 0x44,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x63, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x49, 0x44,
-	0x32, 0x57, 0x0a, 0x07, 0x48, 0x61, 0x6e, 0x64, 0x6c, 0x65, 0x72, 0x12, 0x4c, 0x0a, 0x10, 0x52,
-	0x65, 0x71, 0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x12,
-	0x1b, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x63, 0x6f, 0x6d, 0x6d, 0x2e, 0x43, 0x6f, 0x6e, 0x74,
-	0x61, 0x69, 0x6e, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x19, 0x2e, 0x61,
-	0x67, 0x65, 0x6e, 0x74, 0x63, 0x6f, 0x6d, 0x6d, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e,
-	0x65, 0x72, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x22, 0x00, 0x42, 0x0d, 0x5a, 0x0b, 0x2e, 0x3b, 0x61,
-	0x67, 0x65, 0x6e, 0x74, 0x63, 0x6f, 0x6d, 0x6d, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x67, 0x65, 0x6e, 0x74, 0x63, 0x6f, 0x6d, 0x6d, 0x22, 0x49, 0x0a, 0x17, 0x43, 0x6f, 0x6e, 0x6e,
+	0x65, 0x63, 0x74, 0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x63, 0x6d, 0x49, 0x50, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x05, 0x67, 0x63, 0x6d, 0x49, 0x50, 0x12, 0x18, 0x0a, 0x07, 0x70, 0x6f, 0x64,
+	0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x70, 0x6f, 0x64, 0x4e,
+	0x61, 0x6d, 0x65, 0x22, 0x69, 0x0a, 0x15, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x43, 0x6f,
+	0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x12, 0x18, 0x0a, 0x07,
+	0x70, 0x6f, 0x64, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x70,
+	0x6f, 0x64, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x64, 0x6f, 0x63, 0x6b, 0x65, 0x72,
+	0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x64, 0x6f, 0x63, 0x6b, 0x65, 0x72,
+	0x49, 0x44, 0x12, 0x1a, 0x0a, 0x08, 0x63, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x49, 0x44, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x63, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x49, 0x44, 0x32, 0x68,
+	0x0a, 0x07, 0x48, 0x61, 0x6e, 0x64, 0x6c, 0x65, 0x72, 0x12, 0x5d, 0x0a, 0x13, 0x52, 0x65, 0x71,
+	0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72,
+	0x12, 0x22, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x63, 0x6f, 0x6d, 0x6d, 0x2e, 0x43, 0x6f, 0x6e,
+	0x6e, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65, 0x72, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x61, 0x67, 0x65, 0x6e, 0x74, 0x63, 0x6f, 0x6d, 0x6d,
+	0x2e, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x43, 0x6f, 0x6e, 0x74, 0x61, 0x69, 0x6e, 0x65,
+	0x72, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x22, 0x00, 0x42, 0x0d, 0x5a, 0x0b, 0x2e, 0x3b, 0x61, 0x67,
+	0x65, 0x6e, 0x74, 0x63, 0x6f, 0x6d, 0x6d, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -187,12 +189,12 @@ func file_agent_proto_rawDescGZIP() []byte {
 
 var file_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_agent_proto_goTypes = []interface{}{
-	(*ContainerRequest)(nil), // 0: agentcomm.ContainerRequest
-	(*ContainerReply)(nil),   // 1: agentcomm.ContainerReply
+	(*ConnectContainerRequest)(nil), // 0: agentcomm.ConnectContainerRequest
+	(*ConnectContainerReply)(nil),   // 1: agentcomm.ConnectContainerReply
 }
 var file_agent_proto_depIdxs = []int32{
-	0, // 0: agentcomm.Handler.ReqContainerInfo:input_type -> agentcomm.ContainerRequest
-	1, // 1: agentcomm.Handler.ReqContainerInfo:output_type -> agentcomm.ContainerReply
+	0, // 0: agentcomm.Handler.ReqConnectContainer:input_type -> agentcomm.ConnectContainerRequest
+	1, // 1: agentcomm.Handler.ReqConnectContainer:output_type -> agentcomm.ConnectContainerReply
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -207,7 +209,7 @@ func file_agent_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_agent_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ContainerRequest); i {
+			switch v := v.(*ConnectContainerRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -219,7 +221,7 @@ func file_agent_proto_init() {
 			}
 		}
 		file_agent_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ContainerReply); i {
+			switch v := v.(*ConnectContainerReply); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -264,7 +266,7 @@ const _ = grpc.SupportPackageIsVersion6
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type HandlerClient interface {
 	// Sends a greeting
-	ReqContainerInfo(ctx context.Context, in *ContainerRequest, opts ...grpc.CallOption) (*ContainerReply, error)
+	ReqConnectContainer(ctx context.Context, in *ConnectContainerRequest, opts ...grpc.CallOption) (*ConnectContainerReply, error)
 }
 
 type handlerClient struct {
@@ -275,9 +277,9 @@ func NewHandlerClient(cc grpc.ClientConnInterface) HandlerClient {
 	return &handlerClient{cc}
 }
 
-func (c *handlerClient) ReqContainerInfo(ctx context.Context, in *ContainerRequest, opts ...grpc.CallOption) (*ContainerReply, error) {
-	out := new(ContainerReply)
-	err := c.cc.Invoke(ctx, "/agentcomm.Handler/ReqContainerInfo", in, out, opts...)
+func (c *handlerClient) ReqConnectContainer(ctx context.Context, in *ConnectContainerRequest, opts ...grpc.CallOption) (*ConnectContainerReply, error) {
+	out := new(ConnectContainerReply)
+	err := c.cc.Invoke(ctx, "/agentcomm.Handler/ReqConnectContainer", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -287,35 +289,35 @@ func (c *handlerClient) ReqContainerInfo(ctx context.Context, in *ContainerReque
 // HandlerServer is the server API for Handler service.
 type HandlerServer interface {
 	// Sends a greeting
-	ReqContainerInfo(context.Context, *ContainerRequest) (*ContainerReply, error)
+	ReqConnectContainer(context.Context, *ConnectContainerRequest) (*ConnectContainerReply, error)
 }
 
 // UnimplementedHandlerServer can be embedded to have forward compatible implementations.
 type UnimplementedHandlerServer struct {
 }
 
-func (*UnimplementedHandlerServer) ReqContainerInfo(context.Context, *ContainerRequest) (*ContainerReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReqContainerInfo not implemented")
+func (*UnimplementedHandlerServer) ReqConnectContainer(context.Context, *ConnectContainerRequest) (*ConnectContainerReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReqConnectContainer not implemented")
 }
 
 func RegisterHandlerServer(s *grpc.Server, srv HandlerServer) {
 	s.RegisterService(&_Handler_serviceDesc, srv)
 }
 
-func _Handler_ReqContainerInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContainerRequest)
+func _Handler_ReqConnectContainer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConnectContainerRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerServer).ReqContainerInfo(ctx, in)
+		return srv.(HandlerServer).ReqConnectContainer(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/agentcomm.Handler/ReqContainerInfo",
+		FullMethod: "/agentcomm.Handler/ReqConnectContainer",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerServer).ReqContainerInfo(ctx, req.(*ContainerRequest))
+		return srv.(HandlerServer).ReqConnectContainer(ctx, req.(*ConnectContainerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -325,8 +327,8 @@ var _Handler_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*HandlerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ReqContainerInfo",
-			Handler:    _Handler_ReqContainerInfo_Handler,
+			MethodName: "ReqConnectContainer",
+			Handler:    _Handler_ReqConnectContainer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

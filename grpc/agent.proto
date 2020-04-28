@@ -7,17 +7,17 @@ package agentcomm;
 // The greeting service definition.
 service Handler {
   // Sends a greeting
-  rpc ReqContainerInfo (ContainerRequest) returns (ContainerReply) {}
+  rpc ReqConnectContainer (ConnectContainerRequest) returns (ConnectContainerReply) {}
 }
 
 // The request message containing the user's name.
-message ContainerRequest {
+message ConnectContainerRequest {
   string gcmIP = 1;
   string podName = 2;
 }
 
 // The response message containing the greetings
-message ContainerReply {
+message ConnectContainerReply {
   string podName = 1;
   string dockerID = 2;
   int32 cgroupID = 3;

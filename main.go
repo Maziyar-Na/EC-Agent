@@ -6,11 +6,19 @@ package main
 import (
 	"context"
 	"encoding/binary"
+	"flag"
 	pb "github.com/Maziyar-Na/EC-Agent/grpc"
 	"google.golang.org/grpc"
+	apiv1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
 	"log"
 	"net"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -28,6 +36,8 @@ const READ_QUOTA_SYSCALL = 339
 
 //const INTERFACE = "eno1" // This could be changed
 const INTERFACE = "enp0s3"
+
+var clientset *kubernetes.Clientset
 
 type server struct {
 	pb.UnimplementedHandlerServer
@@ -100,33 +110,72 @@ func connectContainer(serverIp, containerName string) (string, int32, uint64) {
 	return containerId, int32(cgId), 0
 }
 
+func GetPodFromName(podName string) *v1.Pod {
+	podObj, _ := clientset.CoreV1().Pods(apiv1.NamespaceDefault).Get(context.TODO(), podName, metav1.GetOptions{})
+	return podObj
+}
 
+func GetDockerId(pod *v1.Pod) string {
+	return pod.Status.ContainerStatuses[0].ContainerID[9:]
+}
+
+func GetDockerPid(dockerId string) (int, int, string) {
+	cmd := "sudo docker inspect --format '{{ .State.Pid }}' " + dockerId
+	out, err := exec.Command("/bin/sh", "-c", cmd).Output()
+	if err != nil {
+		return 0, 1, "ERROR in getting PID of container with id " + dockerId + ": " + err.Error()
+	}
+	pid := string(out)
+	pid = strings.TrimSuffix(pid, "\n")
+	pidInt, err := strconv.Atoi(pid)
+	if err != nil {
+		return  0, 1, err.Error()
+	}
+	return pidInt, 0, ""
+}
+
+func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int32, uint64){
+	// call syscall for ec_connect here
+	gcmIp := ip2int(net.ParseIP(gcmIpStr))
+	port := 4444
+	interfaceIP := getIpFromInterface(INTERFACE)
+	log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
+	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
+	agentIP := ip2int(interfaceIP)
+	cgId, t, err := syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port), uintptr(pid), uintptr(agentIP) , 0, 0)
+
+	log.Println("cgID: " + string(cgId) + ", t: " + string(t) + ", err: " + err.Error())
+	return dockerId, int32(cgId), 0
+}
 
 //func ConnectContainerGrpc(clientIP, )
 
 // ReqContainerInfo implements agent.HandlerServer
 func (s *server) ReqContainerInfo(ctx context.Context, in *pb.ContainerRequest) (*pb.ContainerReply, error) {
 	log.Printf("Received: %v, %v", in.GetGcmIP(), in.GetPodName())
-	containerId, cgId, ret := connectContainer(in.GetGcmIP(), in.GetPodName())
+	pod := GetPodFromName(in.GetPodName())
+	dockerId := GetDockerId(pod)
+	pid, ret, err := GetDockerPid(dockerId)
 	if ret != 0 {
-		log.Println("[ERROR] Initial Container Connection failed...")
-		log.Println(containerId)
+		log.Println("Error getting docker pid for container: " + dockerId + ", Err: " + err)
+		log.Println()
 	}
+	_, cgroupId, val := RunConnectContainer(in.GcmIP, dockerId, pid)
+	if val != 0 {
+		log.Println("Error getting docker pid for container: " + dockerId + ", Err: " + string(val))
+		log.Println()
+	}
+
 	return &pb.ContainerReply{
 		PodName: in.GetPodName(),
-		DockerID: containerId,
-		CgroupID: cgId,
+		DockerID: dockerId,
+		CgroupID: cgroupId,
 	}, nil
-
-	//return &pb.ContainerReply{
-	//	ClientIP: "YO:" + in.GetClientIP(),
-	//	PodName:"POD_NAME: " + in.GetPodName(),
-	//	DockerID: "DOCKER_ID",
-	//	CgroupID: 23,
-	//}, nil
 }
 
 func main() {
+	clientset = configK8()
+
 	l, err := net.Listen("tcp4", PORT)
 	if err != nil {
 		log.Println(err)
@@ -138,4 +187,25 @@ func main() {
 		log.Fatalf("failed to serve: %v", err)
 	}
 
+}
+
+func configK8() *kubernetes.Clientset {
+	var kubeconfig *string
+	if home := homedir.HomeDir(); home != "" {
+		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
+	} else {
+		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
+	}
+	flag.Parse()
+
+	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+	if err != nil {
+		panic(err)
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
+
+	return clientset
 }
