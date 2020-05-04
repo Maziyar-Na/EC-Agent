@@ -25,9 +25,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
-	"sync"
 )
 
 const MAXGCMNO = 30
@@ -104,14 +104,14 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 	agentIP := ip2int(interfaceIP)
 	cgId, t, err := syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port), uintptr(pid), uintptr(agentIP) , 0, 0)
 
-	log.Println("cgID: " + string(cgId) + ", t: " + string(t) + ", err: " + err.Error())
+	log.Println("cgID: " + string(int(cgId)) + ", t: " + string(t) + ", err: " + err.Error())
 	return dockerId, int32(cgId), 0
 }
 
 //func ConnectContainerGrpc(clientIP, )
 
 // ReqContainerInfo implements agent.HandlerServer
-func (s *server) ReqContainerInfo(ctx context.Context, in *pb.ConnectContainerRequest) (*pb.ConnectContainerReply, error) {
+func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContainerRequest) (*pb.ConnectContainerReply, error) {
 	log.Printf("Received: %v, %v", in.GetGcmIP(), in.GetPodName())
 	pod := GetPodFromName(in.GetPodName())
 	dockerId := GetDockerId(pod)
@@ -125,6 +125,9 @@ func (s *server) ReqContainerInfo(ctx context.Context, in *pb.ConnectContainerRe
 		log.Println("Error getting docker pid for container: " + dockerId + ", Err: " + string(val))
 		log.Println()
 	}
+	//fmt.Print(pid)
+	//var cgroupId int32
+	//cgroupId = 42
 
 	return &pb.ConnectContainerReply{
 		PodName: in.GetPodName(),
@@ -331,10 +334,10 @@ func main() {
 	clientset = configK8()
 	var wg sync.WaitGroup
 
-	wg.Add(1)
+	wg.Add(2)
 
 	go GrpcServer(&wg)
-	//go TcpServer(&wg)
+	go TcpServer(&wg)
 	wg.Wait()
 
 	//l, err := net.Listen("tcp4", PORT)
