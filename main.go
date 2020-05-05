@@ -39,6 +39,7 @@ const RESIZE_MEM_SYSCALL = 336
 const INCREASE_MEM_CG_MARGIN_SYSCALL = 337
 const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
+const GET_PARENT_CGID_SYSCALL = 340
 
 //const INTERFACE = "eno1" // This could be changed
 const INTERFACE = "enp0s3"
@@ -205,15 +206,29 @@ func handleMemReq(cgroupId int32) uint64 {
 	log.Printf("[INFO]: EC Agent: Reclaimed memory is: %d\n", availMem)
 	return availMem
 }
-
+//Assumption: we deploy a single container per pod, when we want to resize,
+//first we change the memory limit of the pod then the target container itself
 func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int) uint64 {
 	log.Printf("setting new mem limit to: %d\n", newLimit)
-	availMemRet, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroupId), uintptr(newLimit), uintptr(isMemsw))
+
+	parentCgroupID, _, _ := syscall.Syscall(GET_PARENT_CGID_SYSCALL, uintptr(cgroupId), 0, 0)
+	parentCgID := int32(parentCgroupID)
+
+	availMemRet, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(parentCgID), uintptr(newLimit), uintptr(isMemsw))
 	availMem := uint64(availMemRet)
 
 	if availMem == 0 {
-		log.Printf("[INFO]: EC Agent: resize_max_mem fails. Ret: %d \n", availMem)
+		log.Printf("[INFO]: EC Agent: resize_max_mem fails in pod level. Ret: %d \n", availMem)
+		return availMem
 	}
+
+	availMemRet, _, _ = syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroupId), uintptr(newLimit), uintptr(isMemsw))
+	availMem = uint64(availMemRet)
+
+	if availMem == 0 {
+		log.Printf("[INFO]: EC Agent: resize_max_mem fails in container level. Ret: %d \n", availMem)
+	}
+
 	return availMem
 }
 
