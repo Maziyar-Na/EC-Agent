@@ -13,9 +13,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"io"
-	apiv1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
@@ -103,17 +100,17 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 
 // ReqContainerInfo implements agent.HandlerServer
 func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContainerRequest) (*pb.ConnectContainerReply, error) {
-	log.Printf("Received: %v, %v", in.GetGcmIP(), in.GetPodName())
+	log.Printf("Received: %v, %v, %v", in.GetGcmIP(), in.GetPodName(), in.GetDockerId())
 	//pod := GetPodFromName(in.GetPodName())
 	//dockerId := GetDockerId(pod)
-	pid, ret, err := GetDockerPid(dockerId)
+	pid, ret, err := GetDockerPid(in.GetDockerId())
 	if ret != 0 {
-		log.Println("Error getting docker pid for container: " + dockerId + ", Err: " + err)
+		log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + err)
 		log.Println()
 	}
-	_, cgroupId, val := RunConnectContainer(in.GcmIP, dockerId, pid)
+	_, cgroupId, val := RunConnectContainer(in.GcmIP, in.GetDockerId(), pid)
 	if val != 0 {
-		log.Println("Error getting docker pid for container: " + dockerId + ", Err: " + string(val))
+		log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + string(val))
 		log.Println()
 	}
 	//fmt.Print(pid)
@@ -122,7 +119,7 @@ func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContaine
 
 	return &pb.ConnectContainerReply{
 		PodName: in.GetPodName(),
-		DockerID: dockerId,
+		DockerID: in.GetDockerId(),
 		CgroupID: cgroupId,
 	}, nil
 }
