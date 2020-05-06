@@ -70,15 +70,6 @@ func ip2int(ip net.IP) uint32 {
 	return binary.BigEndian.Uint32(ip)
 }
 
-func GetPodFromName(podName string) *v1.Pod {
-	podObj, _ := clientset.CoreV1().Pods(apiv1.NamespaceDefault).Get(context.TODO(), podName, metav1.GetOptions{})
-	return podObj
-}
-
-func GetDockerId(pod *v1.Pod) string {
-	return pod.Status.ContainerStatuses[0].ContainerID[9:]
-}
-
 func GetDockerPid(dockerId string) (int, int, string) {
 	cmd := "sudo docker inspect --format '{{ .State.Pid }}' " + dockerId
 	out, err := exec.Command("/bin/sh", "-c", cmd).Output()
@@ -113,8 +104,8 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 // ReqContainerInfo implements agent.HandlerServer
 func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContainerRequest) (*pb.ConnectContainerReply, error) {
 	log.Printf("Received: %v, %v", in.GetGcmIP(), in.GetPodName())
-	pod := GetPodFromName(in.GetPodName())
-	dockerId := GetDockerId(pod)
+	//pod := GetPodFromName(in.GetPodName())
+	//dockerId := GetDockerId(pod)
 	pid, ret, err := GetDockerPid(dockerId)
 	if ret != 0 {
 		log.Println("Error getting docker pid for container: " + dockerId + ", Err: " + err)
