@@ -14,9 +14,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"io"
-	apiv1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
@@ -71,16 +68,6 @@ func ip2int(ip net.IP) uint32 {
 	return binary.BigEndian.Uint32(ip)
 }
 
-func GetPodFromName(podName string) *v1.Pod {
-	fmt.Println(clientset.CoreV1().Pods(apiv1.NamespaceDefault).List(context.TODO(), metav1.ListOptions{}))
-	podObj, _ := clientset.CoreV1().Pods(apiv1.NamespaceDefault).Get(context.TODO(), podName, metav1.GetOptions{})
-	return podObj
-}
-
-func GetDockerId(pod *v1.Pod) string {
-	return pod.Status.ContainerStatuses[0].ContainerID[9:]
-}
-
 func GetDockerPid(dockerId string) (int, int, string) {
 	cmd := "sudo docker inspect --format '{{ .State.Pid }}' " + dockerId
 	out, err := exec.Command("/bin/sh", "-c", cmd).Output()
@@ -112,27 +99,24 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 
 // ReqContainerInfo implements agent.HandlerServer
 func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContainerRequest) (*pb.ConnectContainerReply, error) {
-	log.Printf("Received: %v, %v", in.GetGcmIP(), in.GetPodName())
-	//todo: need to run these next two lines in deployer
-	pod := GetPodFromName(in.GetPodName())
-	dockerId := GetDockerId(pod)
-	pid, ret, err := GetDockerPid(dockerId)
+	log.Printf("Received: %v, %v, %v", in.GetGcmIP(), in.GetPodName(), in.GetDockerId())
+	pid, ret, err := GetDockerPid(in.GetDockerId())
 	if ret != 0 {
-		log.Println("Error getting docker pid for container: " + dockerId + ", Err: " + err)
+		log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + err)
 		log.Println()
 	}
-	_, cgroupId, val := RunConnectContainer(in.GcmIP, dockerId, pid)
+	_, cgroupId, val := RunConnectContainer(in.GcmIP, in.GetDockerId(), pid)
 	if val != 0 {
-		log.Println("Error getting docker pid for container: " + dockerId + ", Err: " + string(val))
+		log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + string(val))
 		log.Println()
 	}
-	//fmt.Print(pid)
+	fmt.Print(pid)
 	//var cgroupId int32
 	//cgroupId = 42
 
 	return &pb.ConnectContainerReply{
 		PodName: in.GetPodName(),
-		DockerID: dockerId,
+		DockerID: in.GetDockerId(),
 		CgroupID: cgroupId,
 	}, nil
 }

@@ -14,6 +14,7 @@ service Handler {
 message ConnectContainerRequest {
   string gcmIP = 1;
   string podName = 2;
+  string dockerId = 3;
 }
 
 // The response message containing the greetings
