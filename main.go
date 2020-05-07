@@ -7,7 +7,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/binary"
-	"flag"
 	"fmt"
 	pb "github.com/Maziyar-Na/EC-Agent/grpc"
 	msg_struct "github.com/Maziyar-Na/EC-Agent/msg"
@@ -15,12 +14,9 @@ import (
 	"google.golang.org/grpc"
 	"io"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 	"log"
 	"net"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -280,7 +276,6 @@ func TcpServer(wg *sync.WaitGroup) {
 }
 
 func main() {
-	clientset = configK8()
 	var wg sync.WaitGroup
 
 	wg.Add(2)
@@ -288,25 +283,4 @@ func main() {
 	go GrpcServer(&wg)
 	go TcpServer(&wg)
 	wg.Wait()
-}
-
-func configK8() *kubernetes.Clientset {
-	var kubeconfig *string
-	if home := homedir.HomeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	}
-	flag.Parse()
-
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
-	if err != nil {
-		panic(err)
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		panic(err)
-	}
-
-	return clientset
 }
