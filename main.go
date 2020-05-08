@@ -13,7 +13,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"io"
-	"k8s.io/client-go/kubernetes"
 	"log"
 	"net"
 	"os/exec"
@@ -36,8 +35,6 @@ const GET_PARENT_CGID_SYSCALL = 340
 
 //const INTERFACE = "eno1" // This could be changed
 const INTERFACE = "enp0s3"
-
-var clientset *kubernetes.Clientset
 
 type server struct {
 	pb.UnimplementedHandlerServer
