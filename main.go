@@ -191,16 +191,53 @@ func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
 	log.Printf("setting quota to: %d\n", quota)
 	var updatedQuota uint64
 	quotaMega := quota/1000
-	ret, _, _ := syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(cgroupId), uintptr(quotaMega), 0)
+	var fistCgroupToUpdate int32
+	var secondCgroupToUpdate int32
+	var isInc int32
+
+	//Getting Current quota -> compare with new quota -> conclude which cgroup to update first
+	curr_quota, _, _ := syscall.Syscall(READ_QUOTA_SYSCALL, uintptr(cgroupId), 0, 0)
+	currQuota := uint64(curr_quota)
+	log.Println("[INFO] cuurent quota: ", currQuota)
+	log.Println("[INFO] new quota:", quotaMega)
+	if currQuota < quotaMega {
+		isInc = 1
+	} else {
+		log.Println("[INFO] we are decreasing the quota!")
+		isInc = 0
+	}
+
+	parentCgroupID, _, _ := syscall.Syscall(GET_PARENT_CGID_SYSCALL, uintptr(cgroupId), 0, 0)
+	parentCgID := int32(parentCgroupID)
+	log.Println("getting the parent id: ", int32(parentCgID))
+	//TODO: need error handling here
+	if isInc == 1 {
+		fistCgroupToUpdate = parentCgID
+		secondCgroupToUpdate = cgroupId
+	} else {
+		fistCgroupToUpdate = cgroupId
+		secondCgroupToUpdate = parentCgID
+	}
+	
+	//Which cgroup to update first is clear now -> let's do it
+	ret, _, _ := syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(quotaMega), 0)
 	if ret == 1 {
-		log.Println("Quota Set Failed")
+		log.Println("[Error] Quota Set Failed at the first level!")
 		ret = 1
 		updatedQuota = 0
 	} else {
-		log.Println("Quota Set Success. set to: ", uint64(ret))
-		updatedQuota = uint64(ret)
-		ret = 0
+		ret, _, _ := syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(secondCgroupToUpdate), uintptr(quotaMega), 0)
+		if ret == 1 {
+			log.Println("Quota Set Failed at the second level!")
+			ret = 1
+			updatedQuota = 0
+		} else {
+			log.Println("Quota Set Success. set to: ", uint64(ret))
+			updatedQuota = uint64(ret)
+			ret = 0
+		}
 	}
+	
 	return updatedQuota, uint64(ret)
 }
 
@@ -214,25 +251,36 @@ func handleMemReq(cgroupId int32) uint64 {
 }
 //Assumption: we deploy a single container per pod, when we want to resize,
 //first we change the memory limit of the pod then the target container itself
-func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int) uint64 {
+func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int) uint64 {
 	log.Printf("setting new mem limit to: %d\n", newLimit)
+	var fistCgroupToUpdate int32
+	var secondCgroupToUpdate int32
+
 
 	parentCgroupID, _, _ := syscall.Syscall(GET_PARENT_CGID_SYSCALL, uintptr(cgroupId), 0, 0)
 	parentCgID := int32(parentCgroupID)
-
-	availMemRet, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(parentCgID), uintptr(newLimit), uintptr(isMemsw))
+	
+	if isInc == 1 {
+		fistCgroupToUpdate = parentCgID
+		secondCgroupToUpdate = cgroupId
+	} else {
+		fistCgroupToUpdate = cgroupId
+		secondCgroupToUpdate = parentCgID
+	}
+	//TODO: error handling needed here
+	availMemRet, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
 	availMem := uint64(availMemRet)
 
-	if availMem == 0 {
-		log.Printf("[INFO]: EC Agent: resize_max_mem fails in pod level. Ret: %d \n", availMem)
+	if availMem != 0 {
+		log.Printf("[INFO]: EC Agent: resize_max_mem fails in first level. Ret: %d \n", availMem)
 		return availMem
 	}
 
-	availMemRet, _, _ = syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroupId), uintptr(newLimit), uintptr(isMemsw))
+	availMemRet, _, _ = syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(secondCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
 	availMem = uint64(availMemRet)
 
-	if availMem == 0 {
-		log.Printf("[INFO]: EC Agent: resize_max_mem fails in container level. Ret: %d \n", availMem)
+	if availMem != 0 {
+		log.Printf("[INFO]: EC Agent: resize_max_mem fails in second level. Ret: %d \n", availMem)
 	}
 
 	return availMem
@@ -292,7 +340,7 @@ func handleConnection(conn net.Conn) {
 			}
 		case 5:
 			log.Println("Handle RESIZE MAX/MIN")
-			ret = handleResizeMaxMem(rxMsg.GetCgroupId(), rxMsg.GetRsrcAmnt(), 0)
+			ret = handleResizeMaxMem(rxMsg.GetCgroupId(), rxMsg.GetRsrcAmnt(), 0, 0)
 		default:
 			log.Println("[ERROR] Not going in the right way! request type is invalid!")
 		}
