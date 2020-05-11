@@ -145,26 +145,27 @@ func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
 		fistCgroupToUpdate = cgroupId
 		secondCgroupToUpdate = parentCgID
 	}
-	
+
 	//Which cgroup to update first is clear now -> let's do it
 	ret, _, _ := syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(quotaMega), 0)
 	if ret == 1 {
 		log.Println("[Error] Quota Set Failed at the first level!")
 		ret = 1
 		updatedQuota = 0
-	} else {
-		ret, _, _ := syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(secondCgroupToUpdate), uintptr(quotaMega), 0)
-		if ret == 1 {
-			log.Println("Quota Set Failed at the second level!")
-			ret = 1
-			updatedQuota = 0
-		} else {
-			log.Println("Quota Set Success. set to: ", uint64(ret))
-			updatedQuota = uint64(ret)
-			ret = 0
-		}
+		return updatedQuota, uint64(ret)
 	}
-	
+
+	ret, _, _ = syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(secondCgroupToUpdate), uintptr(quotaMega), 0)
+	if ret == 1 {
+		log.Println("Quota Set Failed at the second level!")
+		ret = 1
+		updatedQuota = 0
+	} else {
+		log.Println("Quota Set Success. set to: ", uint64(ret))
+		updatedQuota = uint64(ret)
+		ret = 0
+	}
+
 	return updatedQuota, uint64(ret)
 }
 
