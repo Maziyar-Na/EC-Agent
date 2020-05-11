@@ -125,8 +125,8 @@ func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
 	//Getting Current quota -> compare with new quota -> conclude which cgroup to update first
 	curr_quota, _, _ := syscall.Syscall(READ_QUOTA_SYSCALL, uintptr(cgroupId), 0, 0)
 	currQuota := uint64(curr_quota)
-	log.Println("[INFO] cuurent quota: ", currQuota)
-	log.Println("[INFO] new quota:", quotaMega)
+	//log.Println("[INFO] cuurent quota: ", currQuota)
+	//log.Println("[INFO] new quota:", quotaMega)
 	if currQuota < quotaMega {
 		isInc = 1
 	} else {
@@ -136,7 +136,7 @@ func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
 
 	parentCgroupID, _, _ := syscall.Syscall(GET_PARENT_CGID_SYSCALL, uintptr(cgroupId), 0, 0)
 	parentCgID := int32(parentCgroupID)
-	log.Println("getting the parent id: ", int32(parentCgID))
+	//log.Println("getting the parent id: ", int32(parentCgID))
 	//TODO: need error handling here
 	if isInc == 1 {
 		fistCgroupToUpdate = parentCgID
