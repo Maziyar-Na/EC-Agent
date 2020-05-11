@@ -13,3 +13,6 @@ Agent/.idea/
 Agent/proto/msg.pb.cc
 Agent/proto/msg.pb.h
 Agent/log_non_ec_4.txt
+Agent/proto/CMakeFiles/
+Agent/proto/cmake_install.cmake
+Agent/proto/libproto.so
