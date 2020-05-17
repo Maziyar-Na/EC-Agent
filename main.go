@@ -87,6 +87,9 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 	cgId, t, err := syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port), uintptr(pid), uintptr(agentIP) , 0, 0)
 
 	log.Println("cgID: " + string(int(cgId)) + ", t: " + string(t) + ", err: " + err.Error())
+	if int(cgId) == -1 {
+		fmt.Println("ERROR IN RUNCONNECT CONTAINER. Rx back cgroupID: -1")
+	}
 	return dockerId, int32(cgId), 0
 }
 
@@ -104,6 +107,9 @@ func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContaine
 		log.Println()
 	}
 	fmt.Print(pid)
+	if int(cgroupId) == -1 {
+		fmt.Println("ERROR IN REQCONNECT CONTAINER. Rx back cgroupID: -1")
+	}
 	//var cgroupId int32
 	//cgroupId = 42
 
@@ -196,8 +202,10 @@ func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int)
 		secondCgroupToUpdate = parentCgID
 	}
 	//TODO: error handling needed here
-	availMemRet, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
+	availMemRet, a, b := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
 	availMem := uint64(availMemRet)
+	fmt.Println(int64(a))
+	fmt.Println(int64(b))
 
 	if availMem != 0 {
 		log.Printf("[INFO]: EC Agent: resize_max_mem fails in first level. Ret: %d \n", availMem)
