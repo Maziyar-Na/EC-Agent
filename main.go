@@ -33,8 +33,8 @@ const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 const GET_PARENT_CGID_SYSCALL = 340
 
-//const INTERFACE = "eno1" // This could be changed
-const INTERFACE = "enp0s3"
+const INTERFACE = "eno1" // This could be changed
+//const INTERFACE = "enp0s3"
 
 type server struct {
 	pb.UnimplementedHandlerServer
@@ -81,7 +81,7 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 	gcmIp := ip2int(net.ParseIP(gcmIpStr))
 	port := 4444
 	interfaceIP := getIpFromInterface(INTERFACE)
-	log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
+	//log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
 	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
 	agentIP := ip2int(interfaceIP)
 	cgId, t, err := syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port), uintptr(pid), uintptr(agentIP) , 0, 0)
@@ -121,7 +121,7 @@ func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContaine
 }
 
 func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
-	log.Printf("setting quota to: %d\n", quota)
+	//log.Printf("setting quota to: %d\n", quota)
 	var updatedQuota uint64
 	quotaMega := quota/1000
 	var fistCgroupToUpdate int32
@@ -136,7 +136,7 @@ func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
 	if currQuota < quotaMega {
 		isInc = 1
 	} else {
-		log.Println("[INFO] we are decreasing the quota!")
+		//log.Println("[INFO] we are decreasing the quota!")
 		isInc = 0
 	}
 
@@ -167,7 +167,7 @@ func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
 		ret = 1
 		updatedQuota = 0
 	} else {
-		log.Println("Quota Set Success. set to: ", uint64(ret))
+		//log.Println("Quota Set Success. set to: ", uint64(ret))
 		updatedQuota = uint64(ret)
 		ret = 0
 	}
@@ -254,25 +254,25 @@ func handleConnection(conn net.Conn) {
 		var ret uint64
 		var container_id string
 		var updated_quota uint64
-		log.Println("--------------- BEGIN NEW REQUEST ---------------")
+		//log.Println("--------------- BEGIN NEW REQUEST ---------------")
 		switch rxMsg.GetReqType() {
 		case 0:
-			log.Println("CPU Request")
+			//log.Println("CPU Request")
 			updated_quota, ret = handleCpuReq(rxMsg.GetCgroupId(), rxMsg.GetQuota())
 		case 1:
-			log.Println("Memory Request")
+			//log.Println("Memory Request")
 			ret = handleMemReq(rxMsg.GetCgroupId())
 		case 2:
 			log.Println("Init Request")
 		case 3:
 			log.Println("CPU SLICE")
 		case 5:
-			log.Println("Handle RESIZE MAX/MIN")
+			//log.Println("Handle RESIZE MAX/MIN")
 			ret = handleResizeMaxMem(rxMsg.GetCgroupId(), rxMsg.GetRsrcAmnt(), 0, 0)
 		default:
 			log.Println("[ERROR] Not going in the right way! request type is invalid!")
 		}
-		log.Println("--------------- END NEW REQUEST ---------------")
+		//log.Println("--------------- END NEW REQUEST ---------------")
 
 		//log.Println("Docker Container id:", container_id)
 		//log.Println("Updated Quota", updated_quota)
