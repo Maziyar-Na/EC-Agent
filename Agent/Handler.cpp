@@ -60,12 +60,13 @@ uint64_t ec::agent::Handler::handle_resize_max_mem(uint16_t cgroup_id, uint64_t 
 }
 
 
-uint64_t ec::agent::Handler::connect_container(const string &server_ip, const string &container_name) {
+std::string ec::agent::Handler::connect_container(const string &server_ip, const string &container_name) {
     std::cout << "server_ip: " << server_ip << ". " << "container_name: " << container_name << std::endl;
     string cmd = "sudo docker ps -a | grep k8s_" + container_name + " | awk '{print $1, $3}'";
 
     std::cout << "cmd: " << cmd << std::endl;
     // Todo: Change this so that we looop for maximum of 5 seconds or until a new container is created 
+    
     sleep(5);
 
     std::string container_id = exec(cmd);
@@ -73,24 +74,24 @@ uint64_t ec::agent::Handler::connect_container(const string &server_ip, const st
     // This is the where we can confirm whether the container was successfully created and deployed
     if (container_id.empty()) {
         std::cout << "[dbg]: No container found with name: " << container_name << std::endl;
-        return (uint64_t) -1;
+        return "error";
     }
     size_t pos = container_id.find(" ");    
     container_id = container_id.substr(0, pos);
-    // std::cout << "[dbg] Docker Container ID: " << container_id << std::endl;
+     std::cout << "[dbg] Docker Container ID: " << container_id << std::endl;
 
     cmd = "sudo docker inspect --format '{{ .State.Pid }}' " + container_id;
     string pid = exec(cmd);
     // // every container created should have a PID but in the case that it hasn't started, it won't have one. This is another error
     if (pid.empty()) {
         std::cout << "[dbg]: Error in getting PID for container with name:" << container_name << std::endl;
-        return (uint64_t) -1;
+        return "error";
     }
 
     std::cout << "calling sysconnect" << std::endl;
 
     pid.erase(remove(pid.begin(), pid.end(), '\n'), pid.end());
-    cmd = "../../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444 " + "enp0s3";//"eno1";
+    cmd = "../../ec_syscalls/sys_connect " + server_ip + " " + pid + " 4444 " + "eno1";//"eno1";
 
     std::cout << "sysconnect command: " << cmd << std::endl;
 
@@ -98,18 +99,13 @@ uint64_t ec::agent::Handler::connect_container(const string &server_ip, const st
 
     if (output.find("ERROR") != std::string::npos) {
         std::cout << "[dbg]: Error in calling sys_connect for container with name:" << container_name << std::endl;
-        return (uint64_t) -1;
+        return "error";
     }
-    
-    uint64_t pid_return_value;
-    std::istringstream iss(pid);
-    iss >> pid_return_value;
-    return pid_return_value;
+    return container_id;
 }
 
 //Helper function to handle request
-char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
-
+char* ec::agent::Handler::handle_request(char* buff, unsigned long &tx_size){
 
     google::protobuf::uint32 siz = readHdr(buff);
     msg_struct::ECMessage rx_msg;
@@ -128,10 +124,13 @@ char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
 //    std::cout << "in quota: " << rx_msg.quota() << std::endl;
 //    std::cout << "in seq num: " << rx_msg.request() << std::endl;
 //    std::cout << "in time: " << std::chrono::system_clock::to_time_t(t) << std::endl;
-
+    
     uint64_t ret = 0;
     uint64_t updated_quota = 0;
+    std::string container_id;
     std::cout << "rx_msg.req_type(): " << rx_msg.req_type() << std::endl;
+
+    msg_struct::ECMessage tx_msg;
     switch (rx_msg.req_type() ) {
         case _CPU_:
             std::cout << "[Agent DBG]: handle cpu_req" << std::endl;
@@ -150,10 +149,9 @@ char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
             std::cout << "[DBG] Slice message, not sure if we need this" << std::endl;
             break;
         case _CONNECT_:
-            ret = connect_container(rx_msg.client_ip(), rx_msg.payload_string());
-            break;
-        case _MEM_LIMIT_:
-            ret = 2061374;//TODO: temporary. for testing purpose. we need a syscall to extract mem limit based on cgroup id
+            container_id = connect_container(rx_msg.client_ip(), rx_msg.payload_string());
+            std::cout << "docker container docker id: " << container_id << std::endl;
+            tx_msg.set_payload_string(container_id);
             break;
         case _SET_MAX_MEM_:
             ret = handle_resize_max_mem(rx_msg.cgroup_id(), rx_msg.rsrc_amnt(), false);
@@ -165,13 +163,10 @@ char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
             std::cerr << "[ERROR] Not going in the right way! request type is invalid!" << std::endl;
     }
 
-
-    msg_struct::ECMessage tx_msg;
     tx_msg.set_req_type(rx_msg.req_type());
     tx_msg.set_rsrc_amnt(ret);
     tx_msg.set_quota(updated_quota);
     tx_msg.set_request(rx_msg.request());
-    tx_msg.set_payload_string(rx_msg.payload_string());
 
 //    std::cout << "out rsrc_amnt: " << tx_msg.rsrc_amnt() << std::endl;
 //    std::cout << "out seq num: " << tx_msg.request() << std::endl;
@@ -186,8 +181,9 @@ char* ec::agent::Handler::handle_request(char* buff, int &tx_size){
     */
 
     tx_size = tx_msg.ByteSizeLong()+4;
-    char* tx_buf = new char[tx_size];
-    google::protobuf::io::ArrayOutputStream arrayOut(tx_buf, tx_size);
+    char *tx_buf{ new char[tx_size]{} };
+    std::cout << *tx_buf << std::endl;
+    google::protobuf::io::ArrayOutputStream arrayOut(tx_buf, (int)tx_size);
     google::protobuf::io::CodedOutputStream codedOut(&arrayOut);
     codedOut.WriteVarint32(tx_msg.ByteSizeLong());
     tx_msg.SerializeToCodedStream(&codedOut);
@@ -202,7 +198,7 @@ void ec::agent::Handler::run(int64_t clifd) {
 //    bzero(buff, __BUFFSIZE__);
     std::cout << "[RUN log] We are ready to accept request from GCM! fd is: " << clifd << std::endl;
     char* tx_buff;
-    int tx_size = 0;
+    unsigned long tx_size = 0;
 
     while( (bytes_read = read(clifd, buff, __BUFFSIZE__) ) > 0 ) {
         std::cout << "rx req!" << std::endl;

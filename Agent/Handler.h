@@ -45,18 +45,18 @@ namespace ec {
         using string = std::string;
         class Handler {
         public:
-            void run(int64_t clifd);
+            static void run(int64_t clifd);
             static void *run_handler(void *server_args);
 
         private:
-            char *handle_request(char *buff, int &tx_size);
+            static char *handle_request(char *buff, unsigned long &tx_size);
             static uint64_t handle_mem_req(uint64_t cgroup_id);
             static uint64_t handle_cpu_req(uint64_t cgroup_id, uint64_t quota, uint64_t &updated_quota);
             static uint64_t handle_resize_max_mem(uint16_t cgroup_id, uint64_t new_limit, int is_memsw);
 
 //            static int64_t handle_read_quota(uint16_t cgroup_id);
 
-            static uint64_t connect_container(const std::string &server_ip, const std::string &container_name);
+            static std::string connect_container(const std::string &server_ip, const std::string &container_name);
             static std::string exec(std::string &command);
             static google::protobuf::uint32 readHdr(char *buf);
             std::mutex protolock;
