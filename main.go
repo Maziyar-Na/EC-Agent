@@ -33,6 +33,7 @@ const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 const GET_PARENT_CGID_SYSCALL = 340
 const READ_MEM_USAGE_SYSCALL = 341
+const READ_MEM_LIMIT_SYSCALL = 342
 
 const INTERFACE = "eno1" // This could be changed
 //const INTERFACE = "enp0s3"
@@ -197,6 +198,16 @@ func readMemUsage(cgroupId int32) uint64{
 	log.Printf("[INFO]: EC Agent: Memory usage is: %d\n", memUsage)
 	return memUsage
 }
+
+func readMemLimit(cgroupId int32) uint64{
+	log.Printf("cgroup_id: %d\n", cgroupId)
+	memLimitRet, _, _ := syscall.Syscall(READ_MEM_LIMIT_SYSCALL, uintptr(cgrroupId), 0, 0)
+	memLimit := uint64(memLimitRet)
+
+	log.Printf("[INFO]: EC Agent: Memory limit is: %d\n", memLimit)
+	return memLimit
+}
+
 //Assumption: we deploy a single container per pod, when we want to resize,
 //first we change the memory limit of the pod then the target container itself
 func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int) uint64 {
@@ -285,6 +296,8 @@ func handleConnection(conn net.Conn) {
 			ret = handleResizeMaxMem(rxMsg.GetCgroupId(), rxMsg.GetRsrcAmnt(), 0, 0)
 		case 6:
 			ret = readMemUsage(rxMsg.GetCgroupId())
+		case 7:
+			ret = readMemLimit(rxMsg.GetCgroupId())
 		default:
 			log.Println("[ERROR] Not going in the right way! request type is invalid!")
 		}
