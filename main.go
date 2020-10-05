@@ -33,8 +33,8 @@ const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 const GET_PARENT_CGID_SYSCALL = 340
 
-const INTERFACE = "eno1" // This could be changed
-//const INTERFACE = "enp0s3"
+//const INTERFACE = "eno1" // This could be changed
+const INTERFACE = "enp0s3"
 
 type server struct {
 	pb.UnimplementedHandlerServer
@@ -69,6 +69,7 @@ func GetDockerPid(dockerId string) (int, int, string) {
 	}
 	pid := string(out)
 	pid = strings.TrimSuffix(pid, "\n")
+	fmt.Println("Get docker PID returned pid: " + pid)
 	pidInt, err := strconv.Atoi(pid)
 	if err != nil {
 		return  0, 1, err.Error()
@@ -83,10 +84,11 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 	interfaceIP := getIpFromInterface(INTERFACE)
 	//log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
 	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
+	fmt.Println("pid to run connectContainer: " + strconv.Itoa(pid))
 	agentIP := ip2int(interfaceIP)
 	cgId, t, err := syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port), uintptr(pid), uintptr(agentIP) , 0, 0)
 
-	log.Println("cgID: " + string(int(cgId)) + ", t: " + string(t) + ", err: " + err.Error())
+	log.Println("cgID: " + strconv.Itoa(int(cgId)) + ", t: " + string(t) + ", err: " + err.Error())
 	if int(cgId) == -1 {
 		fmt.Println("ERROR IN RUNCONNECT CONTAINER. Rx back cgroupID: -1")
 	}
