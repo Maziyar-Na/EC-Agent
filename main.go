@@ -33,8 +33,8 @@ const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 const GET_PARENT_CGID_SYSCALL = 340
 
-//const INTERFACE = "eno1" // This could be changed
-const INTERFACE = "enp0s3"
+const INTERFACE = "eno1" // This could be changed
+//const INTERFACE = "enp0s3"
 
 type server struct {
 	pb.UnimplementedHandlerServer
