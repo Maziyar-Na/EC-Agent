@@ -192,7 +192,7 @@ func handleMemReq(cgroupId int32) uint64 {
 
 func readMemUsage(cgroupId int32) uint64{
 	log.Printf("cgroup_id: %d\n", cgroupId)
-	memUsageRet, _, _ := syscall.Syscall(READ_MEM_USAGE_SYSCALL, uintptr(cgrroupId), 0, 0)
+	memUsageRet, _, _ := syscall.Syscall(READ_MEM_USAGE_SYSCALL, uintptr(cgroupId), 0, 0)
 	memUsage := uint64(memUsageRet)
 
 	log.Printf("[INFO]: EC Agent: Memory usage is: %d\n", memUsage)
@@ -201,7 +201,7 @@ func readMemUsage(cgroupId int32) uint64{
 
 func readMemLimit(cgroupId int32) uint64{
 	log.Printf("cgroup_id: %d\n", cgroupId)
-	memLimitRet, _, _ := syscall.Syscall(READ_MEM_LIMIT_SYSCALL, uintptr(cgrroupId), 0, 0)
+	memLimitRet, _, _ := syscall.Syscall(READ_MEM_LIMIT_SYSCALL, uintptr(cgroupId), 0, 0)
 	memLimit := uint64(memLimitRet)
 
 	log.Printf("[INFO]: EC Agent: Memory limit is: %d\n", memLimit)
