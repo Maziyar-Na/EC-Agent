@@ -69,6 +69,7 @@ func GetDockerPid(dockerId string) (int, int, string) {
 	}
 	pid := string(out)
 	pid = strings.TrimSuffix(pid, "\n")
+	fmt.Println("Get docker PID returned pid: " + pid)
 	pidInt, err := strconv.Atoi(pid)
 	if err != nil {
 		return  0, 1, err.Error()
@@ -83,10 +84,11 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 	interfaceIP := getIpFromInterface(INTERFACE)
 	//log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
 	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
+	fmt.Println("pid to run connectContainer: " + strconv.Itoa(pid))
 	agentIP := ip2int(interfaceIP)
 	cgId, t, err := syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port), uintptr(pid), uintptr(agentIP) , 0, 0)
 
-	log.Println("cgID: " + string(int(cgId)) + ", t: " + string(t) + ", err: " + err.Error())
+	log.Println("cgID: " + strconv.Itoa(int(cgId)) + ", t: " + string(t) + ", err: " + err.Error())
 	if int(cgId) == -1 {
 		fmt.Println("ERROR IN RUNCONNECT CONTAINER. Rx back cgroupID: -1")
 	}
@@ -97,21 +99,23 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContainerRequest) (*pb.ConnectContainerReply, error) {
 	log.Printf("Received: %v, %v, %v", in.GetGcmIP(), in.GetPodName(), in.GetDockerId())
 	pid, ret, err := GetDockerPid(in.GetDockerId())
+	cgroupId := int32(0)
 	if ret != 0 {
 		log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + err)
 		log.Println()
+	} else {
+		_, cgId, val := RunConnectContainer(in.GcmIP, in.GetDockerId(), pid)
+		if val != 0 {
+			log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + string(val))
+			log.Println()
+		} else {
+			cgroupId = cgId
+		}
+		fmt.Print(pid)
+		if int(cgroupId) == -1 {
+			fmt.Println("ERROR IN REQCONNECT CONTAINER. Rx back cgroupID: -1")
+		}
 	}
-	_, cgroupId, val := RunConnectContainer(in.GcmIP, in.GetDockerId(), pid)
-	if val != 0 {
-		log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + string(val))
-		log.Println()
-	}
-	fmt.Print(pid)
-	if int(cgroupId) == -1 {
-		fmt.Println("ERROR IN REQCONNECT CONTAINER. Rx back cgroupID: -1")
-	}
-	//var cgroupId int32
-	//cgroupId = 42
 
 	return &pb.ConnectContainerReply{
 		PodName: in.GetPodName(),
