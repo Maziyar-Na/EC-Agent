@@ -33,8 +33,8 @@ const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 const GET_PARENT_CGID_SYSCALL = 340
 
-//const INTERFACE = "eno1" // This could be changed
-const INTERFACE = "enp0s3"
+const INTERFACE = "eno1" // This could be changed
+//const INTERFACE = "enp0s3"
 
 type server struct {
 	pb.UnimplementedHandlerServer
@@ -99,22 +99,22 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContainerRequest) (*pb.ConnectContainerReply, error) {
 	log.Printf("Received: %v, %v, %v", in.GetGcmIP(), in.GetPodName(), in.GetDockerId())
 	pid, ret, err := GetDockerPid(in.GetDockerId())
+	cgroupId := int32(0)
 	if ret != 0 {
 		log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + err)
 		log.Println()
-	}
-	_, cgroupId, val := RunConnectContainer(in.GcmIP, in.GetDockerId(), pid)
-	if val != 0 {
-		log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + string(val))
-		log.Println()
-	}
-	fmt.Print(pid)
-	if int(cgroupId) == -1 {
-		fmt.Println("ERROR IN REQCONNECT CONTAINER. Rx back cgroupID: -1")
-	}
-
-	if ret != 0 {
-		cgroupId = 0
+	} else {
+		_, cgId, val := RunConnectContainer(in.GcmIP, in.GetDockerId(), pid)
+		if val != 0 {
+			log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + string(val))
+			log.Println()
+		} else {
+			cgroupId = cgId
+		}
+		fmt.Print(pid)
+		if int(cgroupId) == -1 {
+			fmt.Println("ERROR IN REQCONNECT CONTAINER. Rx back cgroupID: -1")
+		}
 	}
 
 	return &pb.ConnectContainerReply{
