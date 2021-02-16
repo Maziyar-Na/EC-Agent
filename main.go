@@ -33,8 +33,8 @@ const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 const GET_PARENT_CGID_SYSCALL = 340
 
-const INTERFACE = "eno1" // This could be changed
-//const INTERFACE = "enp0s3"
+//const INTERFACE = "eno1" // This could be changed
+const INTERFACE = "enp0s3"
 
 type server struct {
 	pb.UnimplementedHandlerServer
@@ -124,57 +124,122 @@ func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContaine
 	}, nil
 }
 
-func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
-	//log.Printf("setting quota to: %d\n", quota)
+func handleCpuReq(cgroupId int32, quota uint64, dockerId string) (uint64, uint64) {
 	var updatedQuota uint64
 	quotaMega := quota/1000
-	var fistCgroupToUpdate int32
-	var secondCgroupToUpdate int32
+	//var fistCgroupToUpdate int32
+	//var secondCgroupToUpdate int32
 	var isInc int32
 
-	//Getting Current quota -> compare with new quota -> conclude which cgroup to update first
-	curr_quota, _, _ := syscall.Syscall(READ_QUOTA_SYSCALL, uintptr(cgroupId), 0, 0)
-	currQuota := uint64(curr_quota)
-	//log.Println("[INFO] cuurent quota: ", currQuota)
-	//log.Println("[INFO] new quota:", quotaMega)
-	if currQuota < quotaMega {
-		isInc = 1
-	} else {
-		//log.Println("[INFO] we are decreasing the quota!")
-		isInc = 0
+	cmd := "kubectl get pod -o jsonpath='{range .items[?(@.status.containerStatuses[].containerID==\"" +
+		"docker://" + dockerId + "\")]}{.metadata.uid}{end}' -n media-microsvc"
+	out, err := exec.Command("/bin/sh", "-c", cmd).Output()
+	if err != nil {
+		fmt.Println("ERROR in getting UID of pod with docker id " + dockerId + ": " + err.Error())
+		return 0, 0
 	}
+	uid := string(out)
+	fmt.Println("Get pod UID returned uid: " + uid)
 
-	parentCgroupID, _, _ := syscall.Syscall(GET_PARENT_CGID_SYSCALL, uintptr(cgroupId), 0, 0)
-	parentCgID := int32(parentCgroupID)
-	//log.Println("getting the parent id: ", int32(parentCgID))
-	//TODO: need error handling here
-	if isInc == 1 {
-		fistCgroupToUpdate = parentCgID
-		secondCgroupToUpdate = cgroupId
-	} else {
-		fistCgroupToUpdate = cgroupId
-		secondCgroupToUpdate = parentCgID
-	}
 
-	//Which cgroup to update first is clear now -> let's do it
-	ret, _, _ := syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(quotaMega), 0)
-	if ret == 1 {
-		log.Println("[Error] Quota Set Failed at the first level!")
-		ret = 1
-		updatedQuota = 0
-		return updatedQuota, uint64(ret)
+	pathP := "/sys/fs/cgroup/cpu/kubepods/pod" + uid + "/cpu.cfs_quota_us"
+	cmdP := "echo " + strconv.FormatUint(quotaMega, 10) + " | sudo tee " + pathP
+	outP, errP := exec.Command("/bin/sh", "-c", cmdP).Output()
+	if errP != nil {
+		fmt.Println("ERROR setting new parent quota with docker id " + dockerId + ": " + errP.Error())
+		return 0, 0
 	}
+	newQuotaP := string(outP)
+	fmt.Println("newquota: " + newQuotaP)
+	var ret = 0
 
-	ret, _, _ = syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(secondCgroupToUpdate), uintptr(quotaMega), 0)
-	if ret == 1 {
-		log.Println("Quota Set Failed at the second level!")
-		ret = 1
-		updatedQuota = 0
-	} else {
-		//log.Println("Quota Set Success. set to: ", uint64(ret))
-		updatedQuota = uint64(ret)
-		ret = 0
-	}
+	////Getting Current quota -> compare with new quota -> conclude which cgroup to update first
+	//curr_quota, _, _ := syscall.Syscall(READ_QUOTA_SYSCALL, uintptr(cgroupId), 0, 0)
+	//currQuota := uint64(curr_quota)
+	////log.Println("[INFO] cuurent quota: ", currQuota)
+	////log.Println("[INFO] new quota:", quotaMega)
+	//if currQuota < quotaMega {
+	//	isInc = 1
+	//} else {
+	//	//log.Println("[INFO] we are decreasing the quota!")
+	//	isInc = 0
+	//}
+	//
+	////parentCgroupID, _, _ := syscall.Syscall(GET_PARENT_CGID_SYSCALL, uintptr(cgroupId), 0, 0)
+	////parentCgID := int32(parentCgroupID)
+	//var ret = 1
+	////log.Println("getting the parent id: ", int32(parentCgID))
+	////TODO: need error handling here
+	//if isInc == 1 {
+	//	//fistCgroupToUpdate = parentCgID
+	//	//secondCgroupToUpdate = cgroupId
+	//
+	//	pathP := "/sys/fs/cgroup/cpu/kubepods/pod" + uid + "/cpu.cfs_quota_us"
+	//	cmdP := "echo " + strconv.FormatUint(quotaMega, 10) + " | sudo tee " + pathP
+	//	outP, errP := exec.Command("/bin/sh", "-c", cmdP).Output()
+	//	if errP != nil {
+	//		fmt.Println("ERROR setting new parent quota with docker id " + dockerId + ": " + errP.Error())
+	//		return 0, 0
+	//	}
+	//	newQuotaP := string(outP)
+	//	fmt.Println("newquota: " + newQuotaP)
+	//
+	//	pathC := "/sys/fs/cgroup/cpu/kubepods/pod" + uid + "/" + dockerId + "/cpu.cfs_quota_us"
+	//	cmdC := "echo " + strconv.FormatUint(quotaMega, 10) + " | sudo tee " + pathC
+	//	outC, errC := exec.Command("/bin/sh", "-c", cmdC).Output()
+	//	if errC != nil {
+	//		fmt.Println("ERROR setting new parent quota with docker id " + dockerId + ": " + errC.Error())
+	//		return 0, 0
+	//	}
+	//	newQuotaC := string(outC)
+	//	fmt.Println("newquota: " + newQuotaC)
+	//	ret = 0
+	//
+	//} else {
+	//	//fistCgroupToUpdate = cgroupId
+	//	//secondCgroupToUpdate = parentCgID
+	//
+	//	pathC := "/sys/fs/cgroup/cpu/kubepods/pod" + uid + "/" + dockerId + "/cpu.cfs_quota_us"
+	//	cmdC := "echo " + strconv.FormatUint(quotaMega, 10) + " | sudo tee " + pathC
+	//	outC, errC := exec.Command("/bin/sh", "-c", cmdC).Output()
+	//	if errC != nil {
+	//		fmt.Println("ERROR setting new parent quota with docker id " + dockerId + ": " + errC.Error())
+	//		return 0, 0
+	//	}
+	//	newQuotaC := string(outC)
+	//	fmt.Println("newquota: " + newQuotaC)
+	//
+	//	pathP := "/sys/fs/cgroup/cpu/kubepods/pod" + uid + "/cpu.cfs_quota_us"
+	//	cmdP := "echo " + strconv.FormatUint(quotaMega, 10) + " | sudo tee " + pathP
+	//	outP, errP := exec.Command("/bin/sh", "-c", cmdP).Output()
+	//	if errP != nil {
+	//		fmt.Println("ERROR setting new parent quota with docker id " + dockerId + ": " + errP.Error())
+	//		return 0, 0
+	//	}
+	//	newQuotaP := string(outP)
+	//	fmt.Println("newquota: " + newQuotaP)
+	//	ret = 0
+	//}
+
+	////Which cgroup to update first is clear now -> let's do it
+	//ret, _, _ := syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(quotaMega), 0)
+	//if ret == 1 {
+	//	log.Println("[Error] Quota Set Failed at the first level!")
+	//	ret = 1
+	//	updatedQuota = 0
+	//	return updatedQuota, uint64(ret)
+	//}
+	//
+	//ret, _, _ = syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(secondCgroupToUpdate), uintptr(quotaMega), 0)
+	//if ret == 1 {
+	//	log.Println("Quota Set Failed at the second level!")
+	//	ret = 1
+	//	updatedQuota = 0
+	//} else {
+	//	//log.Println("Quota Set Success. set to: ", uint64(ret))
+	//	updatedQuota = uint64(ret)
+	//	ret = 0
+	//}
 
 	return updatedQuota, uint64(ret)
 }
@@ -262,7 +327,7 @@ func handleConnection(conn net.Conn) {
 		switch rxMsg.GetReqType() {
 		case 0:
 			//log.Println("CPU Request")
-			updated_quota, ret = handleCpuReq(rxMsg.GetCgroupId(), rxMsg.GetQuota())
+			updated_quota, ret = handleCpuReq(rxMsg.GetCgroupId(), rxMsg.GetQuota(), rxMsg.GetPayloadString())
 		case 1:
 			//log.Println("Memory Request")
 			ret = handleMemReq(rxMsg.GetCgroupId())
