@@ -13,6 +13,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 	"io"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	"log"
 	"net"
 	"os/exec"
@@ -36,8 +39,38 @@ const GET_PARENT_CGID_SYSCALL = 340
 //const INTERFACE = "eno1" // This could be changed
 const INTERFACE = "enp0s3"
 
+type dockerIdToPodNameMap struct {
+	sync.RWMutex
+	internal map[string]string
+}
+
+func (m *dockerIdToPodNameMap) Read(key string) (string, bool) {
+	m.RLock()
+	result, ok := m.internal[key]
+	m.RUnlock()
+	return result, ok
+}
+
+func (m *dockerIdToPodNameMap) Insert(key, value string) {
+	m.Lock()
+	m.internal[key] = value
+	m.Unlock()
+}
+
+func (m *dockerIdToPodNameMap) Delete(key string) {
+	m.Lock()
+	delete(m.internal, key)
+	m.Unlock()
+}
+
+var m *dockerIdToPodNameMap
+
 type server struct {
 	pb.UnimplementedHandlerServer
+}
+
+func initMap() {
+	m = &dockerIdToPodNameMap{internal: map[string]string{}}
 }
 
 func getIpFromInterface(inter string) net.IP {
@@ -124,22 +157,26 @@ func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContaine
 	}, nil
 }
 
-func handleCpuReq(cgroupId int32, quota uint64, dockerId string) (uint64, uint64) {
+func handleCpuReq(cgroupId int32, quota uint64, uid string, dockerId string) (uint64, uint64) {
 	var updatedQuota uint64
 	quotaMega := quota/1000
 	//var fistCgroupToUpdate int32
 	//var secondCgroupToUpdate int32
-	var isInc int32
+	//var isInc int32
 
-	cmd := "kubectl get pod -o jsonpath='{range .items[?(@.status.containerStatuses[].containerID==\"" +
-		"docker://" + dockerId + "\")]}{.metadata.uid}{end}' -n media-microsvc"
-	out, err := exec.Command("/bin/sh", "-c", cmd).Output()
-	if err != nil {
-		fmt.Println("ERROR in getting UID of pod with docker id " + dockerId + ": " + err.Error())
-		return 0, 0
-	}
-	uid := string(out)
-	fmt.Println("Get pod UID returned uid: " + uid)
+	//var kubeClient kclient.Interface
+
+	fmt.Println("podUid, dockerId: " + uid + " -- " + dockerId)
+
+	//cmd := "kubectl get pod -o jsonpath='{range .items[?(@.status.containerStatuses[].containerID==\"" +
+	//	"docker://" + dockerId + "\")]}{.metadata.uid}{end}' -n media-microsvc"
+	//out, err := exec.Command("/bin/sh", "-c", cmd).Output()
+	//if err != nil {
+	//	fmt.Println("ERROR in getting UID of pod with docker id " + dockerId + ": " + err.Error())
+	//	return 0, 0
+	//}
+	//uid := string(out)
+	//fmt.Println("Get pod UID returned uid: " + uid)
 
 
 	pathP := "/sys/fs/cgroup/cpu/kubepods/pod" + uid + "/cpu.cfs_quota_us"
@@ -291,7 +328,7 @@ func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int)
 	return availMem
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, clientset kubernetes.Clientset) {
 	log.Printf("[DBG] Server: New fd created for new connection. Serving %s\n", conn.RemoteAddr().String())
 	for {
 		buff := make([]byte, BUFFSIZE)
@@ -319,6 +356,28 @@ func handleConnection(conn net.Conn) {
 			log.Println("ERROR in ProtoBuff - UnMarshaling: ", err.Error())
 		}
 
+		containerId := rxMsg.GetPayloadString()
+		uid := ""
+		if podUid, ok := m.Read(containerId); !ok {
+			pods, _ := clientset.CoreV1().Pods("media-microsvc").List(context.TODO(), v1.ListOptions{})
+			for _, pod := range pods.Items {
+				if strings.Trim(pod.Status.ContainerStatuses[0].ContainerID,"docker://") == containerId {
+					fmt.Println(pod.GetName())
+					uid = string(pod.UID)
+					m.Insert(containerId, uid)
+					fmt.Println("PodUid Not set! setting now: " + uid)
+					break
+				}
+				fmt.Println("did, cid: " + strings.Trim(pod.Status.ContainerStatuses[0].ContainerID,"docker://") + ", " +  containerId)
+			}
+			fmt.Println("PodUid when read not successful! : " + uid)
+		} else {
+			uid = podUid
+			fmt.Println("PodUid is already set! podUid, uid: " + podUid + ", "  + uid)
+		}
+		fmt.Println("PodUid passing into function: " + uid)
+
+
 		// log.Println("Recieved message req type: ", rxMsg.GetReqType())
 		var ret uint64
 		var container_id string
@@ -327,7 +386,7 @@ func handleConnection(conn net.Conn) {
 		switch rxMsg.GetReqType() {
 		case 0:
 			//log.Println("CPU Request")
-			updated_quota, ret = handleCpuReq(rxMsg.GetCgroupId(), rxMsg.GetQuota(), rxMsg.GetPayloadString())
+			updated_quota, ret = handleCpuReq(rxMsg.GetCgroupId(), rxMsg.GetQuota(), uid, containerId)
 		case 1:
 			//log.Println("Memory Request")
 			ret = handleMemReq(rxMsg.GetCgroupId())
@@ -383,7 +442,7 @@ func GrpcServer(wg *sync.WaitGroup) {
 	}
 }
 
-func TcpServer(wg *sync.WaitGroup) {
+func TcpServer(wg *sync.WaitGroup, clientset kubernetes.Clientset) {
 	defer wg.Done()
 	l, err := net.Listen("tcp4", PORT)
 	if err != nil {
@@ -393,17 +452,20 @@ func TcpServer(wg *sync.WaitGroup) {
 	log.Println("Listening on port: " + PORT)
 	for {
 		if conn, err := l.Accept(); err == nil {
-			go handleConnection(conn)
+			go handleConnection(conn, clientset)
 		}
 	}
 }
 
 func main() {
 	var wg sync.WaitGroup
+	config, _ := clientcmd.BuildConfigFromFlags("","/home/greg/.kube/config")
+	clientset, _ := kubernetes.NewForConfig(config)
+	initMap()
 
 	wg.Add(2)
 
 	go GrpcServer(&wg)
-	go TcpServer(&wg)
+	go TcpServer(&wg, *clientset)
 	wg.Wait()
 }
