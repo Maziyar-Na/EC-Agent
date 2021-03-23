@@ -126,7 +126,7 @@ func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContaine
 }
 
 func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
-	log.Printf("setting quota to: %d\n", quota)
+	//log.Printf("setting quota to: %d\n", quota)
 	var updatedQuota uint64
 	quotaMega := quota/1000
 	var fistCgroupToUpdate int32
