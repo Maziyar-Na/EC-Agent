@@ -23,7 +23,7 @@ import (
 )
 
 const MAXGCMNO = 30
-const PORT = ":4445"
+const TCP_PORT = ":4445"
 const PORT_GRPC	= ":4446"
 const BUFFSIZE = 2048
 const EC_CONNECT_SYSCALL = 335
@@ -33,8 +33,8 @@ const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 const GET_PARENT_CGID_SYSCALL = 340
 
-const INTERFACE = "eno1" // This could be changed
-//const INTERFACE = "enp0s3"
+//const INTERFACE = "eno1" // This could be changed
+const INTERFACE = "enp0s3"
 
 type server struct {
 	pb.UnimplementedHandlerServer
@@ -80,13 +80,14 @@ func GetDockerPid(dockerId string) (int, int, string) {
 func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int32, uint64){
 	// call syscall for ec_connect here
 	gcmIp := ip2int(net.ParseIP(gcmIpStr))
-	port := 4444
+	port_tcp := 4444
+	port_udp := 4447
 	interfaceIP := getIpFromInterface(INTERFACE)
 	//log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
 	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
 	fmt.Println("pid to run connectContainer: " + strconv.Itoa(pid))
 	agentIP := ip2int(interfaceIP)
-	cgId, t, err := syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port), uintptr(pid), uintptr(agentIP) , 0, 0)
+	cgId, t, err := syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port_tcp), uintptr(port_udp), uintptr(pid), uintptr(agentIP), 0)
 
 	log.Println("cgID: " + strconv.Itoa(int(cgId)) + ", t: " + string(t) + ", err: " + err.Error())
 	if int(cgId) == -1 {
@@ -320,12 +321,12 @@ func GrpcServer(wg *sync.WaitGroup) {
 
 func TcpServer(wg *sync.WaitGroup) {
 	defer wg.Done()
-	l, err := net.Listen("tcp4", PORT)
+	l, err := net.Listen("tcp4", TCP_PORT)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	log.Println("Listening on port: " + PORT)
+	log.Println("Listening on port: " + TCP_PORT)
 	for {
 		if conn, err := l.Accept(); err == nil {
 			go handleConnection(conn)
