@@ -23,7 +23,7 @@ import (
 )
 
 const MAXGCMNO = 30
-const PORT = ":4445"
+const TCP_PORT = ":4445"
 const PORT_GRPC	= ":4446"
 const BUFFSIZE = 2048
 const EC_CONNECT_SYSCALL = 335
@@ -321,12 +321,12 @@ func GrpcServer(wg *sync.WaitGroup) {
 
 func TcpServer(wg *sync.WaitGroup) {
 	defer wg.Done()
-	l, err := net.Listen("tcp4", PORT)
+	l, err := net.Listen("tcp4", TCP_PORT)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	log.Println("Listening on port: " + PORT)
+	log.Println("Listening on port: " + TCP_PORT)
 	for {
 		if conn, err := l.Accept(); err == nil {
 			go handleConnection(conn)
