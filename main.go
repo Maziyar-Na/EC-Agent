@@ -83,7 +83,7 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 	port_tcp := 4444
 	port_udp := 4447
 	interfaceIP := getIpFromInterface(INTERFACE)
-	//log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
+	log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
 	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
 	fmt.Println("pid to run connectContainer: " + strconv.Itoa(pid))
 	agentIP := ip2int(interfaceIP)
