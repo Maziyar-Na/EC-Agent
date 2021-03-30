@@ -34,7 +34,7 @@ const READ_QUOTA_SYSCALL = 339
 const GET_PARENT_CGID_SYSCALL = 340
 
 //const INTERFACE = "eno1" // This could be changed
-const INTERFACE = "enp0s3"
+const INTERFACE = "enp94s0f0"
 
 type server struct {
 	pb.UnimplementedHandlerServer
@@ -125,36 +125,40 @@ func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContaine
 	}, nil
 }
 
-func handleCpuReq(cgroupId int32, quota uint64) (uint64, uint64) {
+func handleCpuReq(cgroupId int32, quota uint64, change string) (uint64, uint64) {
 	//log.Printf("setting quota to: %d\n", quota)
 	var updatedQuota uint64
 	quotaMega := quota/1000
 	var fistCgroupToUpdate int32
 	var secondCgroupToUpdate int32
-	var isInc int32
+	//var isInc int32
 
-	//Getting Current quota -> compare with new quota -> conclude which cgroup to update first
-	curr_quota, _, _ := syscall.Syscall(READ_QUOTA_SYSCALL, uintptr(cgroupId), 0, 0)
-	currQuota := uint64(curr_quota)
-	//log.Println("[INFO] cuurent quota: ", currQuota)
-	//log.Println("[INFO] new quota:", quotaMega)
-	if currQuota < quotaMega {
-		isInc = 1
-	} else {
-		//log.Println("[INFO] we are decreasing the quota!")
-		isInc = 0
-	}
+
+
+	////Getting Current quota -> compare with new quota -> conclude which cgroup to update first
+	//curr_quota, _, _ := syscall.Syscall(READ_QUOTA_SYSCALL, uintptr(cgroupId), 0, 0)
+	//currQuota := uint64(curr_quota)
+	////log.Println("[INFO] cuurent quota: ", currQuota)
+	////log.Println("[INFO] new quota:", quotaMega)
+	//if currQuota < quotaMega {
+	//	isInc = 1
+	//} else {
+	//	//log.Println("[INFO] we are decreasing the quota!")
+	//	isInc = 0
+	//}
 
 	parentCgroupID, _, _ := syscall.Syscall(GET_PARENT_CGID_SYSCALL, uintptr(cgroupId), 0, 0)
 	parentCgID := int32(parentCgroupID)
 	//log.Println("getting the parent id: ", int32(parentCgID))
 	//TODO: need error handling here
-	if isInc == 1 {
+	if change == "incr" {
 		fistCgroupToUpdate = parentCgID
 		secondCgroupToUpdate = cgroupId
-	} else {
+	} else if change == "decr" {
 		fistCgroupToUpdate = cgroupId
 		secondCgroupToUpdate = parentCgID
+	} else {
+		log.Println("[Error] change is neither incr or decr! it is: " + change)
 	}
 
 	//Which cgroup to update first is clear now -> let's do it
@@ -263,7 +267,7 @@ func handleConnection(conn net.Conn) {
 		switch rxMsg.GetReqType() {
 		case 0:
 			//log.Println("CPU Request")
-			updated_quota, ret = handleCpuReq(rxMsg.GetCgroupId(), rxMsg.GetQuota())
+			updated_quota, ret = handleCpuReq(rxMsg.GetCgroupId(), rxMsg.GetQuota(), rxMsg.GetPayloadString())
 		case 1:
 			//log.Println("Memory Request")
 			ret = handleMemReq(rxMsg.GetCgroupId())
