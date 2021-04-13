@@ -32,6 +32,7 @@ const INCREASE_MEM_CG_MARGIN_SYSCALL = 337
 const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 const GET_PARENT_CGID_SYSCALL = 340
+const READ_MEM_USAGE_SYSCALL = 341
 
 //const INTERFACE = "eno1" // This could be changed
 const INTERFACE = "enp94s0f0"
@@ -184,6 +185,15 @@ func handleCpuReq(cgroupId int32, quota uint64, change string) (uint64, uint64) 
 	return updatedQuota, uint64(ret)
 }
 
+func readMemUsage(cgroupId int32) uint64{
+	log.Printf("cgroup_id: %d\n", cgroupId)
+	memUsageRet, _, _ := syscall.Syscall(READ_MEM_USAGE_SYSCALL, uintptr(cgroupId), 0, 0)
+	memUsage := uint64(memUsageRet)
+
+	log.Printf("[INFO]: EC Agent: Memory usage is: %d\n", memUsage)
+	return memUsage
+}
+
 func handleMemReq(cgroupId int32) uint64 {
 	log.Printf("cgroup_id: %d\n", cgroupId)
 	availMemRet, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroupId), 0, 0)
@@ -278,6 +288,8 @@ func handleConnection(conn net.Conn) {
 		case 5:
 			//log.Println("Handle RESIZE MAX/MIN")
 			ret = handleResizeMaxMem(rxMsg.GetCgroupId(), rxMsg.GetRsrcAmnt(), 0, 0)
+		case 6:
+			ret = readMemUsage(rxMsg.GetCgroupId())
 		default:
 			log.Println("[ERROR] Not going in the right way! request type is invalid!")
 		}
