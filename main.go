@@ -77,7 +77,7 @@ func GetDockerPid(dockerId string) (int, int, string) {
 	return pidInt, 0, ""
 }
 
-func RunConnectContainer(gcmIpStr string, dockerId string, pid int, appNum int) (string, int32, uint64){
+func RunConnectContainer(gcmIpStr string, dockerId string, pid int, appNum int32) (string, int32, uint64){
 	// call syscall for ec_connect here
 	gcmIp := ip2int(net.ParseIP(gcmIpStr))
 	//port_tcp := 4444
