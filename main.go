@@ -77,13 +77,13 @@ func GetDockerPid(dockerId string) (int, int, string) {
 	return pidInt, 0, ""
 }
 
-func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int32, uint64){
+func RunConnectContainer(gcmIpStr string, dockerId string, pid int, appNum int) (string, int32, uint64){
 	// call syscall for ec_connect here
 	gcmIp := ip2int(net.ParseIP(gcmIpStr))
 	//port_tcp := 4444
 	//port_udp := 4447
-	port_tcp := 5000
-	port_udp := 6000
+	port_tcp := 5000 + appNum - 1
+	port_udp := 6000 + appNum - 1
 	interfaceIP := getIpFromInterface(INTERFACE)
 	//log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
 	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
@@ -100,14 +100,14 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int
 
 // ReqContainerInfo implements agent.HandlerServer
 func (s *server) ReqConnectContainer(ctx context.Context, in *pb.ConnectContainerRequest) (*pb.ConnectContainerReply, error) {
-	log.Printf("Received: %v, %v, %v", in.GetGcmIP(), in.GetPodName(), in.GetDockerId())
+	log.Printf("Received: %v, %v, %v, %d", in.GetGcmIP(), in.GetPodName(), in.GetDockerId(), in.GetAppNum())
 	pid, ret, err := GetDockerPid(in.GetDockerId())
 	cgroupId := int32(0)
 	if ret != 0 {
 		log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + err)
 		log.Println()
 	} else {
-		_, cgId, val := RunConnectContainer(in.GcmIP, in.GetDockerId(), pid)
+		_, cgId, val := RunConnectContainer(in.GcmIP, in.GetDockerId(), pid, in.GetAppNum())
 		if val != 0 {
 			log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + string(val))
 			log.Println()
