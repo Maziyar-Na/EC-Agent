@@ -22,19 +22,19 @@ import (
 	"syscall"
 )
 
-const MAXGCMNO = 30
-const TCP_PORT = ":4445"
-const PORT_GRPC	= ":4446"
-const BUFFSIZE = 2048
-const EC_CONNECT_SYSCALL = 335
-const RESIZE_MEM_SYSCALL = 336
-const INCREASE_MEM_CG_MARGIN_SYSCALL = 337
-const RESIZE_QUOTA_SYSCALL = 338
-const READ_QUOTA_SYSCALL = 339
-const GET_PARENT_CGID_SYSCALL = 340
+const TcpPort = ":4445"
+const PortGrpc = ":4446"
+const BuffSize = 2048
+const EcConnectSyscall = 335
+const ResizeMemSyscall = 336
+const ResizeQuotaSyscall = 338
+const GetParentCgidSyscall = 340
+const BaseTcpPort = 5000
+const BaseUdpPort = 6000
 
 //const INTERFACE = "eno1" // This could be changed
-const INTERFACE = "enp94s0f0"
+//const INTERFACE = "enp94s0f0"
+const INTERFACE = "enp0s3"
 
 type server struct {
 	pb.UnimplementedHandlerServer
@@ -80,14 +80,16 @@ func GetDockerPid(dockerId string) (int, int, string) {
 func RunConnectContainer(gcmIpStr string, dockerId string, pid int) (string, int32, uint64){
 	// call syscall for ec_connect here
 	gcmIp := ip2int(net.ParseIP(gcmIpStr))
-	port_tcp := 4444
-	port_udp := 4447
+	//port_tcp := 4444
+	//port_udp := 4447
+	port_tcp := 5000
+	port_udp := 6000
 	interfaceIP := getIpFromInterface(INTERFACE)
 	//log.Printf("[INFO]: IP of the interface %s is %s\n", INTERFACE, interfaceIP)
 	//agentIP := ip2int(net.ParseIP("128.105.144.93"))
 	fmt.Println("pid to run connectContainer: " + strconv.Itoa(pid))
 	agentIP := ip2int(interfaceIP)
-	cgId, t, err := syscall.Syscall6(EC_CONNECT_SYSCALL, uintptr(gcmIp) , uintptr(port_tcp), uintptr(port_udp), uintptr(pid), uintptr(agentIP), 0)
+	cgId, t, err := syscall.Syscall6(EcConnectSyscall, uintptr(gcmIp) , uintptr(port_tcp), uintptr(port_udp), uintptr(pid), uintptr(agentIP), 0)
 
 	log.Println("cgID: " + strconv.Itoa(int(cgId)) + ", t: " + string(t) + ", err: " + err.Error())
 	if int(cgId) == -1 {
@@ -147,7 +149,7 @@ func handleCpuReq(cgroupId int32, quota uint64, change string) (uint64, uint64) 
 	//	isInc = 0
 	//}
 
-	parentCgroupID, _, _ := syscall.Syscall(GET_PARENT_CGID_SYSCALL, uintptr(cgroupId), 0, 0)
+	parentCgroupID, _, _ := syscall.Syscall(GetParentCgidSyscall, uintptr(cgroupId), 0, 0)
 	parentCgID := int32(parentCgroupID)
 	//log.Println("getting the parent id: ", int32(parentCgID))
 	//TODO: need error handling here
@@ -162,7 +164,7 @@ func handleCpuReq(cgroupId int32, quota uint64, change string) (uint64, uint64) 
 	}
 
 	//Which cgroup to update first is clear now -> let's do it
-	ret, _, _ := syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(quotaMega), 0)
+	ret, _, _ := syscall.Syscall(ResizeQuotaSyscall, uintptr(fistCgroupToUpdate), uintptr(quotaMega), 0)
 	if ret == 1 {
 		log.Println("[Error] Quota Set Failed at the first level!")
 		ret = 1
@@ -170,7 +172,7 @@ func handleCpuReq(cgroupId int32, quota uint64, change string) (uint64, uint64) 
 		return updatedQuota, uint64(ret)
 	}
 
-	ret, _, _ = syscall.Syscall(RESIZE_QUOTA_SYSCALL, uintptr(secondCgroupToUpdate), uintptr(quotaMega), 0)
+	ret, _, _ = syscall.Syscall(ResizeQuotaSyscall, uintptr(secondCgroupToUpdate), uintptr(quotaMega), 0)
 	if ret == 1 {
 		log.Println("Quota Set Failed at the second level!")
 		ret = 1
@@ -186,7 +188,7 @@ func handleCpuReq(cgroupId int32, quota uint64, change string) (uint64, uint64) 
 
 func handleMemReq(cgroupId int32) uint64 {
 	log.Printf("cgroup_id: %d\n", cgroupId)
-	availMemRet, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroupId), 0, 0)
+	availMemRet, _, _ := syscall.Syscall(ResizeMemSyscall, uintptr(cgroupId), 0, 0)
 	availMem := uint64(availMemRet)
 
 	log.Printf("[INFO]: EC Agent: Reclaimed memory is: %d\n", availMem)
@@ -200,7 +202,7 @@ func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int)
 	var secondCgroupToUpdate int32
 
 
-	parentCgroupID, _, _ := syscall.Syscall(GET_PARENT_CGID_SYSCALL, uintptr(cgroupId), 0, 0)
+	parentCgroupID, _, _ := syscall.Syscall(GetParentCgidSyscall, uintptr(cgroupId), 0, 0)
 	parentCgID := int32(parentCgroupID)
 	
 	if isInc == 1 {
@@ -211,7 +213,7 @@ func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int)
 		secondCgroupToUpdate = parentCgID
 	}
 	//TODO: error handling needed here
-	availMemRet, a, b := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
+	availMemRet, a, b := syscall.Syscall(ResizeMemSyscall, uintptr(fistCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
 	availMem := uint64(availMemRet)
 	fmt.Println(int64(a))
 	fmt.Println(int64(b))
@@ -221,7 +223,7 @@ func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int)
 		return availMem
 	}
 
-	availMemRet, _, _ = syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(secondCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
+	availMemRet, _, _ = syscall.Syscall(ResizeMemSyscall, uintptr(secondCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
 	availMem = uint64(availMemRet)
 
 	if availMem != 0 {
@@ -234,7 +236,7 @@ func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int)
 func handleConnection(conn net.Conn) {
 	log.Printf("[DBG] Server: New fd created for new connection. Serving %s\n", conn.RemoteAddr().String())
 	for {
-		buff := make([]byte, BUFFSIZE)
+		buff := make([]byte, BuffSize)
 		c := bufio.NewReader(conn)
 		defer conn.Close()
 		// read a single byte which contains the message length at the beginning of the message
@@ -311,7 +313,7 @@ func handleConnection(conn net.Conn) {
 
 func GrpcServer(wg *sync.WaitGroup) {
 	defer wg.Done()
-	l, err := net.Listen("tcp4", PORT_GRPC)
+	l, err := net.Listen("tcp4", PortGrpc)
 	if err != nil {
 		log.Println(err)
 		return
@@ -325,12 +327,12 @@ func GrpcServer(wg *sync.WaitGroup) {
 
 func TcpServer(wg *sync.WaitGroup) {
 	defer wg.Done()
-	l, err := net.Listen("tcp4", TCP_PORT)
+	l, err := net.Listen("tcp4", TcpPort)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	log.Println("Listening on port: " + TCP_PORT)
+	log.Println("Listening on port: " + TcpPort)
 	for {
 		if conn, err := l.Accept(); err == nil {
 			go handleConnection(conn)
