@@ -36,6 +36,7 @@ const READ_MEM_USAGE_SYSCALL = 341
 
 //const INTERFACE = "eno1" // This could be changed
 const INTERFACE = "enp3s0f0"
+//const INTERFACE = "enp0s3"
 
 type server struct {
 	pb.UnimplementedHandlerServer
