@@ -33,6 +33,7 @@ const RESIZE_QUOTA_SYSCALL = 338
 const READ_QUOTA_SYSCALL = 339
 const GET_PARENT_CGID_SYSCALL = 340
 const READ_MEM_USAGE_SYSCALL = 341
+const READ_MEM_LIMIT_SYSCALL = 342
 
 //const INTERFACE = "enp94s0f0"
 const INTERFACE = "enp0s3"
@@ -185,6 +186,15 @@ func handleCpuReq(cgroupId int32, quota uint64, change string) (uint64, uint64) 
 	return updatedQuota, uint64(ret)
 }
 
+func handleMemReq(cgroupId int32) uint64 {
+	log.Printf("cgroup_id: %d\n", cgroupId)
+	availMemRet, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroupId), 0, 0)
+	availMem := uint64(availMemRet)
+
+	log.Printf("[INFO]: EC Agent: Reclaimed memory is: %d\n", availMem)
+	return availMem
+}
+
 func readMemUsage(cgroupId int32) uint64{
 	log.Printf("readMemUsage(). cgroup_id: %d\n", cgroupId)
 	memUsageRet, _, _ := syscall.Syscall(READ_MEM_USAGE_SYSCALL, uintptr(cgroupId), 0, 0)
@@ -194,14 +204,15 @@ func readMemUsage(cgroupId int32) uint64{
 	return memUsage
 }
 
-func handleMemReq(cgroupId int32) uint64 {
+func readMemLimit(cgroupId int32) uint64{
 	log.Printf("cgroup_id: %d\n", cgroupId)
-	availMemRet, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(cgroupId), 0, 0)
-	availMem := uint64(availMemRet)
+	memLimitRet, _, _ := syscall.Syscall(READ_MEM_LIMIT_SYSCALL, uintptr(cgroupId), 0, 0)
+	memLimit := uint64(memLimitRet)
 
-	log.Printf("[INFO]: EC Agent: Reclaimed memory is: %d\n", availMem)
-	return availMem
+	log.Printf("[INFO]: EC Agent: Memory limit is: %d\n", memLimit)
+	return memLimit
 }
+
 //Assumption: we deploy a single container per pod, when we want to resize,
 //first we change the memory limit of the pod then the target container itself
 func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int) uint64 {
@@ -289,6 +300,8 @@ func handleConnection(conn net.Conn) {
 			ret = handleResizeMaxMem(rxMsg.GetCgroupId(), rxMsg.GetRsrcAmnt(), 0, 0)
 		case 6:
 			ret = readMemUsage(rxMsg.GetCgroupId())
+		case 7:
+			ret = readMemLimit(rxMsg.GetCgroupId())
 		default:
 			log.Println("[ERROR] Not going in the right way! request type is invalid!")
 		}
