@@ -223,6 +223,7 @@ func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int)
 	//TODO: error handling needed here
 	availMemRet, a, b := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
 	availMem := uint64(availMemRet)
+	fmt.Printf("return value of the resize syscall after resizing first level: %d\n", availMem)
 	fmt.Println(int64(a))
 	fmt.Println(int64(b))
 
@@ -233,7 +234,7 @@ func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int)
 
 	availMemRet, _, _ = syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(secondCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
 	availMem = uint64(availMemRet)
-
+	fmt.Printf("return value of the resize syscall after resizing second level: %d\n", availMem)
 	if availMem != 0 {
 		log.Printf("[INFO]: EC Agent: resize_max_mem fails in second level. Ret: %d \n", availMem)
 	}
