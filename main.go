@@ -34,9 +34,8 @@ const READ_QUOTA_SYSCALL = 339
 const GET_PARENT_CGID_SYSCALL = 340
 const READ_MEM_USAGE_SYSCALL = 341
 
-//const INTERFACE = "eno1" // This could be changed
-const INTERFACE = "enp3s0f0"
-//const INTERFACE = "enp0s3"
+//const INTERFACE = "enp94s0f0"
+const INTERFACE = "enp0s3"
 
 type server struct {
 	pb.UnimplementedHandlerServer
@@ -187,7 +186,7 @@ func handleCpuReq(cgroupId int32, quota uint64, change string) (uint64, uint64) 
 }
 
 func readMemUsage(cgroupId int32) uint64{
-	log.Printf("cgroup_id: %d\n", cgroupId)
+	log.Printf("readMemUsage(). cgroup_id: %d\n", cgroupId)
 	memUsageRet, _, _ := syscall.Syscall(READ_MEM_USAGE_SYSCALL, uintptr(cgroupId), 0, 0)
 	memUsage := uint64(memUsageRet)
 
@@ -206,7 +205,7 @@ func handleMemReq(cgroupId int32) uint64 {
 //Assumption: we deploy a single container per pod, when we want to resize,
 //first we change the memory limit of the pod then the target container itself
 func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int) uint64 {
-	log.Printf("setting new mem limit to: %d\n", newLimit)
+	log.Printf("handleResizeMaxMem(). setting new mem limit to: %d\n", newLimit)
 	var fistCgroupToUpdate int32
 	var secondCgroupToUpdate int32
 
@@ -222,25 +221,23 @@ func handleResizeMaxMem(cgroupId int32, newLimit uint64, isMemsw int, isInc int)
 		secondCgroupToUpdate = parentCgID
 	}
 	//TODO: error handling needed here
-	availMemRet, a, b := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
-	availMem := uint64(availMemRet)
-	fmt.Printf("return value of the resize syscall after resizing first level: %d\n", availMem)
-	fmt.Println(int64(a))
-	fmt.Println(int64(b))
 
-	if availMem != 0 {
-		log.Printf("[INFO]: EC Agent: resize_max_mem fails in first level. Ret: %d \n", availMem)
-		return availMem
+	errVal, _, _ := syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(fistCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
+	err := uint64(errVal)
+
+	if err != 0 {
+		log.Printf("[INFO]: EC Agent: resize_max_mem fails in first level. Ret: %d \n", err)
+		return err
 	}
 
-	availMemRet, _, _ = syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(secondCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
-	availMem = uint64(availMemRet)
-	fmt.Printf("return value of the resize syscall after resizing second level: %d\n", availMem)
-	if availMem != 0 {
-		log.Printf("[INFO]: EC Agent: resize_max_mem fails in second level. Ret: %d \n", availMem)
+	errVal, _, _ = syscall.Syscall(RESIZE_MEM_SYSCALL, uintptr(secondCgroupToUpdate), uintptr(newLimit), uintptr(isMemsw))
+	err = uint64(errVal)
+
+	if err != 0 {
+		log.Printf("[INFO]: EC Agent: resize_max_mem fails in second level. Ret: %d \n", err)
 	}
 
-	return availMem
+	return err //err should be 0!
 }
 
 func handleConnection(conn net.Conn) {
