@@ -248,10 +248,15 @@ func (s *grpcControllerServer) ReadMemUsage(ctx context.Context, in *pbControlle
 	log.Println("here1")
 
 	log.Printf("[INFO]: Memory usage for cgid: %d is: %d\n", in.GetCgroupId(), memUsage)
-	return &pbController.ReadMemUsageReply{
+
+	k := &pbController.ReadMemUsageReply{
 		CgroupId: in.GetCgroupId(),
 		MemUsage: int64(memUsage),
-	}, nil
+	}
+
+	log.Printf("reply msg: %ld, %d\n", (*k).MemUsage, (*k).CgroupId)
+
+	return k, nil
 
 }
 
