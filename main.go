@@ -241,8 +241,11 @@ func (s *grpcControllerServer) ReqResizeMaxMem(ctx context.Context, in *pbContro
 }
 
 func (s *grpcControllerServer) ReadMemUsage(ctx context.Context, in *pbController.CgroupId) (*pbController.ReadMemUsageReply, error) {
+	log.Println("in readMemUsage")
 	memUsageRet, _, _ := syscall.Syscall(ReadMemUsageSyscall, uintptr(in.GetCgroupId()), 0, 0)
+	log.Println("here")
 	memUsage := uint64(memUsageRet)
+	log.Println("here1")
 
 	log.Printf("[INFO]: Memory usage for cgid: %d is: %d\n", in.GetCgroupId(), memUsage)
 	return &pbController.ReadMemUsageReply{
