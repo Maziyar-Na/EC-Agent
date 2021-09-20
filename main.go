@@ -153,7 +153,8 @@ func AgentWatcher(namespace string) {
 			fmt.Println("ERROR in getting local dockerIDs " + namespace + ": " + err.Error())
 		}
 		containers := string(out)
-		containers = strings.TrimSuffix(containers, "\n")
+		//containers = strings.TrimSuffix(containers, "\n")
+		containers = strings.Split(containers,"\n")
 		fmt.Println("Get namespace containers: " + containers)
 		time.Sleep(1 * time.Second)
 	}
