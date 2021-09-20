@@ -153,13 +153,17 @@ func AgentWatcher(namespace string) {
 		cmd := "sudo docker inspect -f '{{.Name}}' $(sudo docker ps -qf \"name=_" + namespace + "_\")"
 		out, err := exec.Command("/bin/sh", "-c", cmd).Output()
 		if err != nil {
-			fmt.Println("ERROR in getting local dockerIDs " + namespace + ": " + err.Error())
+			if len(containerNamesSet) != 0 {
+				fmt.Println("unable to get dockerIDs in " + namespace + ": " + err.Error())
+			} else {
+				fmt.Println("waiting for containers...")
+			}
 		}
+
 		containers := string(out)
 		containers = strings.TrimSuffix(containers, "\n")
 		container_list := strings.Split(containers, "\n")
 		for _, container := range container_list {
-			fmt.Println("continer: " + container)
 			if strings.Contains(container, "_POD_") {
 				continue
 			}
@@ -172,14 +176,10 @@ func AgentWatcher(namespace string) {
 					log.Println()
 				} else {
 					fmt.Println("new (pid, container) running: (" + strconv.Itoa(pid) + ", " + container + ")")
-
 				}
 			}
-
 		}
-
 		//fmt.Println("Get namespace containers: " + containers)
-
 		time.Sleep(1 * time.Second)
 	}
 
