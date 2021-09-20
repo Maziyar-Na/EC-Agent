@@ -131,7 +131,7 @@ func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDepl
 func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDeployer.TriggerPodDeploymentWatcherRequest) (*pbDeployer.TriggerPodDeploymentWatcherReply, error) {
 	fmt.Println("ReqTriggerAgentWatcher rx: (gcmip, ns, appcount): (" + in.GetGcmIP(), in.GetNamespace(), in.GetAppCount)
 
-	return &pbDeployer.TriggerPodDeploymentWatcher{
+	return &pbDeployer.TriggerPodDeploymentWatcherReply{
 		ReturnStatus: 0,
 	}, nil
 }
