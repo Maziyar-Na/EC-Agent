@@ -159,7 +159,7 @@ func AgentWatcher(namespace string) {
 		containers = strings.TrimSuffix(containers, "\n")
 		container_list := strings.Split(containers, "\n")
 		for _, container := range container_list {
-
+			fmt.Println("continer: " + container)
 			if strings.Contains(container, "_POD_") {
 				continue
 			}
@@ -170,8 +170,10 @@ func AgentWatcher(namespace string) {
 				if ret != 0 {
 					log.Println("Error getting docker pid for container in AgentWatcher: " + container + ", Err: " + err)
 					log.Println()
+				} else {
+					fmt.Println("new (pid, container) running: (" + strconv.Itoa(pid) + ", " + container + ")")
+
 				}
-				fmt.Println("new (pid, container) running: (" + strconv.Itoa(pid) + ", " + container + ")")
 			}
 
 		}
