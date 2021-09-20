@@ -149,16 +149,19 @@ func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDe
 
 //TODO: going to have to deal with issue here maybe when containers are deleted.
 func AgentWatcher(namespace string) {
+	flag := true
 	for {
 		cmd := "sudo docker inspect -f '{{.Name}}' $(sudo docker ps -qf \"name=_" + namespace + "_\")"
 		out, err := exec.Command("/bin/sh", "-c", cmd).Output()
 		if err != nil {
 			if len(containerNamesSet) != 0 {
 				fmt.Println("unable to get dockerIDs in " + namespace + ": " + err.Error())
-			} else {
+				time.Sleep(1 * time.Second)
+			} else if flag {
 				fmt.Println("waiting for containers...")
+				flag = !flag
 			}
-			time.Sleep(1 * time.Second)
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 
