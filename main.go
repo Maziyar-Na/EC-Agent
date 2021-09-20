@@ -17,6 +17,13 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
+	//"golang.org/x/net/context"
+	//
+	//"github.com/docker/docker/api/client/inspect"
+	//Cli "github.com/docker/docker/cli"
+	//flag "github.com/docker/docker/pkg/mflag"
+	//"github.com/docker/engine-api/client"
 )
 
 //const TcpPort = ":4445"
@@ -131,9 +138,26 @@ func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDepl
 func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDeployer.TriggerPodDeploymentWatcherRequest) (*pbDeployer.TriggerPodDeploymentWatcherReply, error) {
 	fmt.Println("ReqTriggerAgentWatcher rx: (gcmip, ns, appcount): (" + in.GetGcmIP(), in.GetNamespace(), in.GetAppCount)
 
+	go AgentWatcher(in.GetNamespace())
+
 	return &pbDeployer.TriggerPodDeploymentWatcherReply{
 		ReturnStatus: 0,
 	}, nil
+}
+
+func AgentWatcher(namespace string) {
+	for {
+		cmd := "sudo docker ps -aqf \"name=_" + namespace + "_\""
+		out, err := exec.Command("/bin/sh", "-c", cmd).Output()
+		if err != nil {
+			fmt.Println("ERROR in getting local dockerIDs " + namespace + ": " + err.Error())
+		}
+		containers := string(out)
+		containers = strings.TrimSuffix(containers, "\n")
+		fmt.Println("Get namespace containers: " + containers)
+		time.Sleep(1 * time.Second)
+	}
+
 }
 
 func (s *grpcControllerServer) ReqQuotaUpdate(ctx context.Context, in *pbController.ContainerQuotaRequest) (*pbController.ContainerQuotaReply, error) {
