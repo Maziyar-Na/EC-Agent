@@ -158,6 +158,8 @@ func AgentWatcher(namespace string) {
 			} else {
 				fmt.Println("waiting for containers...")
 			}
+			time.Sleep(1 * time.Second)
+			continue
 		}
 
 		containers := string(out)
