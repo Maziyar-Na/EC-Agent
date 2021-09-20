@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type HandlerClient interface {
 	// Sends a greeting
 	ReqConnectContainer(ctx context.Context, in *ConnectContainerRequest, opts ...grpc.CallOption) (*ConnectContainerReply, error)
-	ReqTriggerWatcher(ctx context.Context, in *TriggerPodDeploymentWatcher, opts ...grpc.CallOption) (*TriggerPodDeploymentWatcher, error)
+	ReqTriggerAgentWatcher(ctx context.Context, in *TriggerPodDeploymentWatcherRequest, opts ...grpc.CallOption) (*TriggerPodDeploymentWatcherReply, error)
 }
 
 type handlerClient struct {
@@ -40,9 +40,9 @@ func (c *handlerClient) ReqConnectContainer(ctx context.Context, in *ConnectCont
 	return out, nil
 }
 
-func (c *handlerClient) ReqTriggerWatcher(ctx context.Context, in *TriggerPodDeploymentWatcher, opts ...grpc.CallOption) (*TriggerPodDeploymentWatcher, error) {
-	out := new(TriggerPodDeploymentWatcher)
-	err := c.cc.Invoke(ctx, "/agentcomm.Handler/ReqTriggerWatcher", in, out, opts...)
+func (c *handlerClient) ReqTriggerAgentWatcher(ctx context.Context, in *TriggerPodDeploymentWatcherRequest, opts ...grpc.CallOption) (*TriggerPodDeploymentWatcherReply, error) {
+	out := new(TriggerPodDeploymentWatcherReply)
+	err := c.cc.Invoke(ctx, "/agentcomm.Handler/ReqTriggerAgentWatcher", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *handlerClient) ReqTriggerWatcher(ctx context.Context, in *TriggerPodDep
 type HandlerServer interface {
 	// Sends a greeting
 	ReqConnectContainer(context.Context, *ConnectContainerRequest) (*ConnectContainerReply, error)
-	ReqTriggerWatcher(context.Context, *TriggerPodDeploymentWatcher) (*TriggerPodDeploymentWatcher, error)
+	ReqTriggerAgentWatcher(context.Context, *TriggerPodDeploymentWatcherRequest) (*TriggerPodDeploymentWatcherReply, error)
 	mustEmbedUnimplementedHandlerServer()
 }
 
@@ -66,8 +66,8 @@ type UnimplementedHandlerServer struct {
 func (UnimplementedHandlerServer) ReqConnectContainer(context.Context, *ConnectContainerRequest) (*ConnectContainerReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReqConnectContainer not implemented")
 }
-func (UnimplementedHandlerServer) ReqTriggerWatcher(context.Context, *TriggerPodDeploymentWatcher) (*TriggerPodDeploymentWatcher, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReqTriggerWatcher not implemented")
+func (UnimplementedHandlerServer) ReqTriggerAgentWatcher(context.Context, *TriggerPodDeploymentWatcherRequest) (*TriggerPodDeploymentWatcherReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReqTriggerAgentWatcher not implemented")
 }
 func (UnimplementedHandlerServer) mustEmbedUnimplementedHandlerServer() {}
 
@@ -100,20 +100,20 @@ func _Handler_ReqConnectContainer_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Handler_ReqTriggerWatcher_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TriggerPodDeploymentWatcher)
+func _Handler_ReqTriggerAgentWatcher_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TriggerPodDeploymentWatcherRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlerServer).ReqTriggerWatcher(ctx, in)
+		return srv.(HandlerServer).ReqTriggerAgentWatcher(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/agentcomm.Handler/ReqTriggerWatcher",
+		FullMethod: "/agentcomm.Handler/ReqTriggerAgentWatcher",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlerServer).ReqTriggerWatcher(ctx, req.(*TriggerPodDeploymentWatcher))
+		return srv.(HandlerServer).ReqTriggerAgentWatcher(ctx, req.(*TriggerPodDeploymentWatcherRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -130,8 +130,8 @@ var Handler_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Handler_ReqConnectContainer_Handler,
 		},
 		{
-			MethodName: "ReqTriggerWatcher",
-			Handler:    _Handler_ReqTriggerWatcher_Handler,
+			MethodName: "ReqTriggerAgentWatcher",
+			Handler:    _Handler_ReqTriggerAgentWatcher_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
