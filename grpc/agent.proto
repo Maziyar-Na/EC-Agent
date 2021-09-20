@@ -8,6 +8,7 @@ package agentcomm;
 service Handler {
   // Sends a greeting
   rpc ReqConnectContainer (ConnectContainerRequest) returns (ConnectContainerReply) {}
+  rpc ReqTriggerWatcher (TriggerPodDeploymentWatcher) returns (TriggerPodDeploymentWatcher) {}
 }
 
 // The request message containing the user's name.
@@ -24,3 +25,8 @@ message ConnectContainerReply {
   string dockerID = 2;
   int32 cgroupID = 3;
 }
+
+message TriggerPodDeploymentWatcher {
+  string namespace = 1;
+}
+
