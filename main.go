@@ -128,6 +128,14 @@ func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDepl
 	}, nil
 }
 
+func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDeployer.TriggerPodDeploymentWatcherRequest) (*pbDeployer.TriggerPodDeploymentWatcherReply, error) {
+	fmt.Println("ReqTriggerAgentWatcher rx: (gcmip, ns, appcount): (" + in.GetGcmIP(), in.GetNamespace(), in.GetAppCount)
+
+	return &pbDeployer.TriggerPodDeploymentWatcher{
+		ReturnStatus: 0,
+	}, nil
+}
+
 func (s *grpcControllerServer) ReqQuotaUpdate(ctx context.Context, in *pbController.ContainerQuotaRequest) (*pbController.ContainerQuotaReply, error) {
 	//log.Printf("Received: %v, %v, %v, %d", in.GetCgroupId(), in.GetNewQuota(), in.GetResizeFlag(), in.GetSequenceNum())
 	var updatedQuota uint64
