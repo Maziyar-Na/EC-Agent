@@ -147,7 +147,7 @@ func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDe
 
 func AgentWatcher(namespace string) {
 	for {
-		cmd := "sudo docker inspect -f '{{.Name}}' $(sudo docker ps -qf \"name=" + namespace + \")"
+		cmd := "sudo docker inspect -f '{{.Name}}' $(sudo docker ps -qf \"name=_" + namespace + "_\")"
 		out, err := exec.Command("/bin/sh", "-c", cmd).Output()
 		if err != nil {
 			fmt.Println("ERROR in getting local dockerIDs " + namespace + ": " + err.Error())
