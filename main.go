@@ -147,6 +147,7 @@ func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDe
 	}, nil
 }
 
+//TODO: going to have to deal with issue here maybe when containers are deleted.
 func AgentWatcher(namespace string) {
 	for {
 		cmd := "sudo docker inspect -f '{{.Name}}' $(sudo docker ps -qf \"name=_" + namespace + "_\")"
@@ -175,7 +176,8 @@ func AgentWatcher(namespace string) {
 
 		}
 
-		fmt.Println("Get namespace containers: " + containers)
+		//fmt.Println("Get namespace containers: " + containers)
+
 		time.Sleep(1 * time.Second)
 	}
 
