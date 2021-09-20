@@ -42,6 +42,8 @@ const ReadMemLimitSyscall = 342
 //const INTERFACE = "enp0s3"
 const INTERFACE = "enp94s0f0"
 
+var containerNamesSet = make(map[string]bool)
+
 type grpcDeployerServer struct {
 	pbDeployer.UnimplementedHandlerServer
 }
@@ -153,8 +155,26 @@ func AgentWatcher(namespace string) {
 			fmt.Println("ERROR in getting local dockerIDs " + namespace + ": " + err.Error())
 		}
 		containers := string(out)
-		//containers = strings.TrimSuffix(containers, "\n")
-		containers = strings.Split(containers,"\n")
+		containers = strings.TrimSuffix(containers, "\n")
+		container_list := strings.Split(containers, "\n")
+		for _, container := range container_list {
+
+			if strings.Contains(container, "_POD_") {
+				continue
+			}
+			_, ok := containerNamesSet[container] //check if container already in map (also will have been sysconnected)
+			if !ok {
+				containerNamesSet[container] = true //add container to map. now we need to run sysconnect
+				pid, ret, err := GetDockerPid(container)
+				if ret != 0 {
+					log.Println("Error getting docker pid for container in AgentWatcher: " + container + ", Err: " + err)
+					log.Println()
+				}
+				fmt.Println("new (pid, container) running: (" + strconv.Itoa(pid) + ", " + container + ")")
+			}
+
+		}
+
 		fmt.Println("Get namespace containers: " + containers)
 		time.Sleep(1 * time.Second)
 	}
