@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = ".;ec.rpc";
+option go_package = "./ec.rpc";
 
 package ec.rpc;
 
