@@ -158,7 +158,7 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 		if err != nil {
 			if len(containerNamesSet) != 0 {
 				fmt.Println("unable to get dockerIDs in " + namespace + ": " + err.Error())
-				time.Sleep(1 * time.Second)
+				time.Sleep(5 * time.Second)
 			} else if flag {
 				fmt.Println("waiting for containers...")
 				flag = !flag
@@ -207,7 +207,7 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 			}
 		}
 		//fmt.Println("Get namespace containers: " + containers)
-		time.Sleep(1 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 
 }
