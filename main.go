@@ -140,7 +140,7 @@ func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDepl
 func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDeployer.TriggerPodDeploymentWatcherRequest) (*pbDeployer.TriggerPodDeploymentWatcherReply, error) {
 	fmt.Println("ReqTriggerAgentWatcher rx: (gcmip, ns, appcount): (" + in.GetGcmIP(), in.GetNamespace(), in.GetAppCount)
 
-	go AgentWatcher(in.GetNamespace())
+	go AgentWatcher(in.GetGcmIP(), in.GetNamespace(), in.GetAppCount())
 
 	return &pbDeployer.TriggerPodDeploymentWatcherReply{
 		ReturnStatus: 0,
@@ -148,7 +148,7 @@ func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDe
 }
 
 //TODO: going to have to deal with issue here maybe when containers are deleted.
-func AgentWatcher(namespace string) {
+func AgentWatcher(gcmIP string, namespace string, appNum int32) {
 	flag := true
 	for {
 		cmd := "sudo docker inspect -f '{{.Name}}' $(sudo docker ps -qf \"name=_" + namespace + "_\")"
@@ -178,9 +178,26 @@ func AgentWatcher(namespace string) {
 				pid, ret, err := GetDockerPid(container)
 				if ret != 0 {
 					log.Println("Error getting docker pid for container in AgentWatcher: " + container + ", Err: " + err)
-					log.Println()
 				} else {
-					fmt.Println("new (pid, container) running: (" + strconv.Itoa(pid) + ", " + container + ")")
+					fmt.Println("new container (pid, container): (" + strconv.Itoa(pid) + ", " + container + ")")
+					cmd := "sudo docker ps -qf \"name=" + container + "\""
+					out, err := exec.Command("/bin/sh", "-c", cmd).Output()
+					if err != nil {
+						fmt.Println("Failed to get docker id fro m")
+					}
+					docker_id := string(out)
+					docker_id = strings.TrimSuffix(docker_id, "\n")
+					_, cgId, val := RunConnectContainer(gcmIP, docker_id, pid, appNum)
+					if val != 0 {
+						log.Println("Error getting docker pid for container: " + docker_id)
+						log.Println()
+					}
+					fmt.Print(pid)
+					if int(cgId) == -1 {
+						fmt.Println("ERROR IN REQCONNECT CONTAINER. Rx back cgroupID: -1")
+					} else {
+						fmt.Println("connected container to controller! woo!")
+					}
 				}
 			}
 		}
