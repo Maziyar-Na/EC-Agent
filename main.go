@@ -202,7 +202,6 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 					}
 					exportDeployPodSpec(agentIP, gcmIP, docker_id, cgId, appNum)
 
-
 				}
 			}
 		}
