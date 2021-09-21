@@ -28,8 +28,9 @@ message ConnectContainerReply {
 
 message TriggerPodDeploymentWatcherRequest {
   string gcmIP = 1;
-  string namespace = 2;
-  int32 appCount = 3;
+  string agentIP = 2;
+  string namespace = 3;
+  int32 appCount = 4;
 }
 
 message TriggerPodDeploymentWatcherReply {

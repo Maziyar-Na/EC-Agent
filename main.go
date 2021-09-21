@@ -10,6 +10,7 @@ import (
 	pbController "github.com/Maziyar-Na/EC-Agent/containerUpdateGrpc"
 	pbDeployer "github.com/Maziyar-Na/EC-Agent/grpc"
 	"google.golang.org/grpc"
+	dgrpc "github.com/gregcusack/EC-Agent/DeployGRPC"
 	"log"
 	"net"
 	"os/exec"
@@ -29,6 +30,7 @@ import (
 //const TcpPort = ":4445"
 const PortGrpcDeployer = ":4446"
 const PortGrpcController =":4448"
+var BaseGcmGrpcPort = 4447 //app1 gets 4447, app2 gets 4448, ..., appN gets 4447 + appN - 1
 const BuffSize = 2048
 const EcConnectSyscall = 335
 const ResizeMemSyscall = 336
@@ -138,9 +140,9 @@ func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDepl
 }
 
 func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDeployer.TriggerPodDeploymentWatcherRequest) (*pbDeployer.TriggerPodDeploymentWatcherReply, error) {
-	fmt.Println("ReqTriggerAgentWatcher rx: (gcmip, ns, appcount): (" + in.GetGcmIP(), in.GetNamespace(), in.GetAppCount)
+	fmt.Println("ReqTriggerAgentWatcher rx: (gcmip, ns, appcount): (" + in.GetGcmIP(), in.GetAgentIP(), in.GetNamespace(), in.GetAppCount)
 
-	go AgentWatcher(in.GetGcmIP(), in.GetNamespace(), in.GetAppCount())
+	go AgentWatcher(in.GetGcmIP(), in.GetAgentIP(), in.GetNamespace(), in.GetAppCount())
 
 	return &pbDeployer.TriggerPodDeploymentWatcherReply{
 		ReturnStatus: 0,
@@ -148,7 +150,7 @@ func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDe
 }
 
 //TODO: going to have to deal with issue here maybe when containers are deleted.
-func AgentWatcher(gcmIP string, namespace string, appNum int32) {
+func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) {
 	flag := true
 	for {
 		cmd := "sudo docker inspect -f '{{.Name}}' $(sudo docker ps -qf \"name=_" + namespace + "_\")"
@@ -198,12 +200,45 @@ func AgentWatcher(gcmIP string, namespace string, appNum int32) {
 					} else {
 						fmt.Println("connected container to controller! woo!")
 					}
+					exportDeployPodSpec(agentIP, gcmIP, docker_id, cgId, appNum)
+
+
 				}
 			}
 		}
 		//fmt.Println("Get namespace containers: " + containers)
 		time.Sleep(1 * time.Second)
 	}
+
+}
+
+func exportDeployPodSpec(nodeIP string, gcmIP string, dockerID string, cgroupId int32, appCount int32) {
+	fmt.Println("Export pod Spec from cgID: " + strconv.Itoa(int(cgroupId)))
+	var gcm_addr = gcmIP + ":" + strconv.Itoa(BaseGcmGrpcPort + (int(appCount) - 1))
+	//conn, err := grpc.Dial( gcmIP + GCM_GRPC_PORT, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial( gcm_addr, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := dgrpc.NewDeployerExportClient(conn)
+
+	txMsg := &dgrpc.ExportPodSpec{
+		DockerId: dockerID,
+		CgroupId: cgroupId,
+		NodeIp: nodeIP,
+	}
+
+	fmt.Println(txMsg)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	r, err := c.ReportPodSpec(ctx, txMsg)
+	if err != nil {
+		log.Fatalf("could not ExportPodSpec: %v", err)
+	}
+	log.Println("Rx back from gcm: ", r.GetDockerId(), r.GetCgroupId(), r.GetNodeIp(), r.GetThanks())
 
 }
 
