@@ -7,10 +7,10 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	dgrpc "github.com/Maziyar-Na/EC-Agent/DeployGRPC"
 	pbController "github.com/Maziyar-Na/EC-Agent/containerUpdateGrpc"
 	pbDeployer "github.com/Maziyar-Na/EC-Agent/grpc"
 	"google.golang.org/grpc"
-	dgrpc "github.com/Maziyar-Na/EC-Agent/DeployGRPC"
 	"log"
 	"net"
 	"os/exec"
@@ -41,8 +41,8 @@ const BaseUdpPort = 6000
 const ReadMemUsageSyscall = 341
 const ReadMemLimitSyscall = 342
 
-//const INTERFACE = "enp0s3"
-const INTERFACE = "enp94s0f0"
+const INTERFACE = "enp0s3"
+//const INTERFACE = "enp94s0f0"
 
 var containerNamesSet = make(map[string]bool)
 
@@ -112,7 +112,7 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int, appNum int32
 
 // ReqContainerInfo implements agent.HandlerServer
 func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDeployer.ConnectContainerRequest) (*pbDeployer.ConnectContainerReply, error) {
-	log.Printf("Received: %v, %v, %v, %d", in.GetGcmIP(), in.GetPodName(), in.GetDockerId(), in.GetAppNum())
+	//log.Printf("Received: %v, %v, %v, %d", in.GetGcmIP(), in.GetPodName(), in.GetDockerId(), in.GetAppNum())
 	pid, ret, err := GetDockerPid(in.GetDockerId())
 	cgroupId := int32(0)
 	if ret != 0 {
