@@ -112,7 +112,7 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int, appNum int32
 
 // ReqContainerInfo implements agent.HandlerServer
 func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDeployer.ConnectContainerRequest) (*pbDeployer.ConnectContainerReply, error) {
-	//log.Printf("Received: %v, %v, %v, %d", in.GetGcmIP(), in.GetPodName(), in.GetDockerId(), in.GetAppNum())
+	log.Printf("Rx connect container: %v, %v, %v, %d", in.GetGcmIP(), in.GetPodName(), in.GetDockerId(), in.GetAppNum())
 	pid, ret, err := GetDockerPid(in.GetDockerId())
 	cgroupId := int32(0)
 	if ret != 0 {
@@ -242,7 +242,7 @@ func exportDeployPodSpec(nodeIP string, gcmIP string, dockerID string, cgroupId 
 }
 
 func (s *grpcControllerServer) ReqQuotaUpdate(ctx context.Context, in *pbController.ContainerQuotaRequest) (*pbController.ContainerQuotaReply, error) {
-	log.Printf("Received: %v, %v, %v, %d", in.GetCgroupId(), in.GetNewQuota(), in.GetResizeFlag(), in.GetSequenceNum())
+	//log.Printf("Received: %v, %v, %v, %d", in.GetCgroupId(), in.GetNewQuota(), in.GetResizeFlag(), in.GetSequenceNum())
 	var updatedQuota uint64
 	quotaMega := in.GetNewQuota()/1000
 	change := in.GetResizeFlag()
