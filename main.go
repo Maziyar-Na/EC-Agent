@@ -206,7 +206,7 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 					k := time.Since(start).String()
 					k = strings.TrimSuffix(k,"ms")
 					fmt.Printf("%s\n", k)
-					fmt.Printf("time from running to connected to gcm: %s", k)
+					//fmt.Printf("time from running to connected to gcm: %s\n", k)
 				}
 			}
 		}
