@@ -166,6 +166,8 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 			time.Sleep(10 * time.Millisecond)
 			continue
 		}
+		start := time.Now()
+
 
 		containers := string(out)
 		containers = strings.TrimSuffix(containers, "\n")
@@ -201,7 +203,7 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 						fmt.Println("connected container to controller! woo!")
 					}
 					exportDeployPodSpec(agentIP, gcmIP, docker_id, cgId, appNum)
-
+					fmt.Println("time from running to connected to gcm: {}", time.Since(start))
 				}
 			}
 		}
