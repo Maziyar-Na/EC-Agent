@@ -83,7 +83,7 @@ func GetDockerPid(dockerId string) (int, int, string) {
 	}
 	pid := string(out)
 	pid = strings.TrimSuffix(pid, "\n")
-	fmt.Println("Get docker PID returned pid: " + pid)
+	//fmt.Println("Get docker PID returned pid: " + pid)
 	pidInt, err := strconv.Atoi(pid)
 	if err != nil {
 		return  0, 1, err.Error()
@@ -99,11 +99,11 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int, appNum int32
 	port_udp := BaseUdpPort + appNum - 1
 	interfaceIP := getIpFromInterface(INTERFACE)
 
-	fmt.Println("pid to run connectContainer: " + strconv.Itoa(pid))
+	//fmt.Println("pid to run connectContainer: " + strconv.Itoa(pid))
 	agentIP := ip2int(interfaceIP)
-	cgId, t, err := syscall.Syscall6(EcConnectSyscall, uintptr(gcmIp) , uintptr(port_tcp), uintptr(port_udp), uintptr(pid), uintptr(agentIP), 0)
+	cgId, _, _ := syscall.Syscall6(EcConnectSyscall, uintptr(gcmIp) , uintptr(port_tcp), uintptr(port_udp), uintptr(pid), uintptr(agentIP), 0)
 
-	log.Println("cgID: " + strconv.Itoa(int(cgId)) + ", t: " + string(t) + ", err: " + err.Error())
+	//log.Println("cgID: " + strconv.Itoa(int(cgId)) + ", t: " + string(t) + ", err: " + err.Error())
 	if int(cgId) == -1 {
 		fmt.Println("ERROR IN RUNCONNECT CONTAINER. Rx back cgroupID: -1")
 	}
@@ -112,17 +112,17 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int, appNum int32
 
 // ReqContainerInfo implements agent.HandlerServer
 func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDeployer.ConnectContainerRequest) (*pbDeployer.ConnectContainerReply, error) {
-	log.Printf("Rx connect container: %v, %v, %v, %d", in.GetGcmIP(), in.GetPodName(), in.GetDockerId(), in.GetAppNum())
-	pid, ret, err := GetDockerPid(in.GetDockerId())
+	//log.Printf("Rx connect container: %v, %v, %v, %d", in.GetGcmIP(), in.GetPodName(), in.GetDockerId(), in.GetAppNum())
+	pid, ret, _ := GetDockerPid(in.GetDockerId())
 	cgroupId := int32(0)
 	if ret != 0 {
-		log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + err)
-		log.Println()
+		//log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + err)
+		//log.Println()
 	} else {
 		_, cgId, val := RunConnectContainer(in.GcmIP, in.GetDockerId(), pid, in.GetAppNum())
 		if val != 0 {
-			log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + string(val))
-			log.Println()
+			//log.Println("Error getting docker pid for container: " + in.GetDockerId() + ", Err: " + string(val))
+			//log.Println()
 		} else {
 			cgroupId = cgId
 		}
@@ -140,7 +140,7 @@ func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDepl
 }
 
 func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDeployer.TriggerPodDeploymentWatcherRequest) (*pbDeployer.TriggerPodDeploymentWatcherReply, error) {
-	fmt.Println("ReqTriggerAgentWatcher rx: (gcmip, ns, appcount): (" + in.GetGcmIP(), in.GetAgentIP(), in.GetNamespace(), in.GetAppCount)
+	//fmt.Println("ReqTriggerAgentWatcher rx: (gcmip, ns, appcount): (" + in.GetGcmIP(), in.GetAgentIP(), in.GetNamespace(), in.GetAppCount)
 
 	go AgentWatcher(in.GetGcmIP(), in.GetAgentIP(), in.GetNamespace(), in.GetAppCount())
 
@@ -183,7 +183,7 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 				if ret != 0 {
 					log.Println("Error getting docker pid for container in AgentWatcher: " + container + ", Err: " + err)
 				} else {
-					fmt.Println("new container (pid, container): (" + strconv.Itoa(pid) + ", " + container + ")")
+					//fmt.Println("new container (pid, container): (" + strconv.Itoa(pid) + ", " + container + ")")
 					cmd := "sudo docker ps -qf \"name=" + container + "\""
 					out, err := exec.Command("/bin/sh", "-c", cmd).Output()
 					if err != nil {
@@ -200,10 +200,10 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 					if int(cgId) == -1 {
 						fmt.Println("ERROR IN REQCONNECT CONTAINER. Rx back cgroupID: -1")
 					} else {
-						fmt.Println("connected container to controller! woo!")
+						//fmt.Println("connected container to controller! woo!")
 					}
 					exportDeployPodSpec(agentIP, gcmIP, docker_id, cgId, appNum)
-					fmt.Println("time from running to connected to gcm: {}", time.Since(start))
+					//fmt.Println("time from running to connected to gcm: {}", time.Since(start))
 				}
 			}
 		}
@@ -214,7 +214,7 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 }
 
 func exportDeployPodSpec(nodeIP string, gcmIP string, dockerID string, cgroupId int32, appCount int32) {
-	fmt.Println("Export pod Spec from cgID: " + strconv.Itoa(int(cgroupId)))
+	//fmt.Println("Export pod Spec from cgID: " + strconv.Itoa(int(cgroupId)))
 	var gcm_addr = gcmIP + ":" + strconv.Itoa(BaseGcmGrpcPort + (int(appCount) - 1))
 	//conn, err := grpc.Dial( gcmIP + GCM_GRPC_PORT, grpc.WithInsecure(), grpc.WithBlock())
 	conn, err := grpc.Dial( gcm_addr, grpc.WithInsecure(), grpc.WithBlock())
@@ -230,7 +230,7 @@ func exportDeployPodSpec(nodeIP string, gcmIP string, dockerID string, cgroupId 
 		NodeIp: nodeIP,
 	}
 
-	fmt.Println(txMsg)
+	//fmt.Println(txMsg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -239,7 +239,7 @@ func exportDeployPodSpec(nodeIP string, gcmIP string, dockerID string, cgroupId 
 	if err != nil {
 		log.Fatalf("could not ExportPodSpec: %v", err)
 	}
-	log.Println("Rx back from gcm: ", r.GetDockerId(), r.GetCgroupId(), r.GetNodeIp(), r.GetThanks())
+	//log.Println("Rx back from gcm: ", r.GetDockerId(), r.GetCgroupId(), r.GetNodeIp(), r.GetThanks())
 
 }
 
@@ -340,7 +340,7 @@ func (s *grpcControllerServer) ReqResizeMaxMem(ctx context.Context, in *pbContro
 	if err != 0 {
 		log.Printf("[INFO]: EC Agent: resize_max_mem fails in second level. Ret: %d \n", err)
 	} else {
-		log.Printf("Successfuly resized mem for cgid %d to: %d\n", cgroupId, newLimit)
+		//log.Printf("Successfuly resized mem for cgid %d to: %d\n", cgroupId, newLimit)
 	}
 
 	return &pbController.ResizeMaxMemReply{
