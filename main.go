@@ -163,7 +163,7 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 				fmt.Println("waiting for containers...")
 				flag = !flag
 			}
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(1 * time.Millisecond)
 			continue
 		}
 		start := time.Now()
@@ -208,7 +208,7 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 			}
 		}
 		//fmt.Println("Get namespace containers: " + containers)
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 
 }
