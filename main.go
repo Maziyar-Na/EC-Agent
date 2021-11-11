@@ -237,7 +237,7 @@ func exportDeployPodSpec(nodeIP string, gcmIP string, dockerID string, cgroupId 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	_, err := c.ReportPodSpec(ctx, txMsg)
+	_, err = c.ReportPodSpec(ctx, txMsg)
 	if err != nil {
 		log.Fatalf("could not ExportPodSpec: %v", err)
 	}
