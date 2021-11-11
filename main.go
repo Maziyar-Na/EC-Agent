@@ -126,7 +126,7 @@ func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDepl
 		} else {
 			cgroupId = cgId
 		}
-		fmt.Print(pid)
+		//fmt.Print(pid)
 		if int(cgroupId) == -1 {
 			fmt.Println("ERROR IN REQCONNECT CONTAINER. Rx back cgroupID: -1")
 		}
@@ -205,7 +205,8 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 					exportDeployPodSpec(agentIP, gcmIP, docker_id, cgId, appNum)
 					k := time.Since(start).String()
 					k = strings.TrimSuffix(k,"ms")
-					fmt.Println("time from running to connected to gcm: {}", k)
+					fmt.Println(k)
+					//fmt.Println("time from running to connected to gcm: {}", k)
 				}
 			}
 		}
