@@ -196,7 +196,7 @@ func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) 
 						log.Println("Error getting docker pid for container: " + docker_id)
 						log.Println()
 					}
-					fmt.Print(pid)
+					//fmt.Print(pid)
 					if int(cgId) == -1 {
 						fmt.Println("ERROR IN REQCONNECT CONTAINER. Rx back cgroupID: -1")
 					} else {
