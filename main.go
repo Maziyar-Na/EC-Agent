@@ -326,6 +326,8 @@ func (s *grpcControllerServer) ReqResizeMaxMem(ctx context.Context, in *pbContro
 
 	if err != 0 {
 		log.Printf("[INFO]: EC Agent: resize_max_mem fails in first level. Ret: %d \n", err)
+		_, _, _ = syscall.Syscall(ResizeQuotaSyscall, uintptr(fistCgroupToUpdate), uintptr(1000000), 0)
+		_, _, _ = syscall.Syscall(ResizeQuotaSyscall, uintptr(secondCgroupToUpdate), uintptr(1000000), 0)
 		//return err
 		return &pbController.ResizeMaxMemReply{
 			CgroupId:  in.GetCgroupId(),
