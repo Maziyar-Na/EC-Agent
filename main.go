@@ -267,6 +267,7 @@ func (s *grpcControllerServer) ReqQuotaUpdate(ctx context.Context, in *pbControl
 	if ret == 1 {
 		log.Println("[Error] Quota Set Failed at the first level! setting quota high for pod restart")
 		ret, _, _ := syscall.Syscall(ResizeQuotaSyscall, uintptr(fistCgroupToUpdate), uintptr(1000000), 0)
+		ret, _, _ = syscall.Syscall(ResizeQuotaSyscall, uintptr(secondCgroupToUpdate), uintptr(1000000), 0)
 		ret = 1
 		updatedQuota = 0
 		//return updatedQuota, uint64(ret)
