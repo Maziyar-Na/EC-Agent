@@ -42,7 +42,7 @@ const ReadMemUsageSyscall = 341
 const ReadMemLimitSyscall = 342
 
 //const INTERFACE = "enp0s3"
-const INTERFACE = "enp94s0f0"
+const INTERFACE = "escra"
 
 var containerNamesSet = make(map[string]bool)
 
