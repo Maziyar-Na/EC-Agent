@@ -9,6 +9,7 @@ require (
 	golang.org/x/sys v0.0.0-20210426230700-d19ff857e887 // indirect
 	google.golang.org/genproto v0.0.0-20210427215850-f767ed18ee4d // indirect
 	google.golang.org/grpc v1.37.0
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0 // indirect
 	google.golang.org/protobuf v1.26.0
 	k8s.io/api v0.0.0-20200421221621-2ca06ba83edf
 	k8s.io/apimachinery v0.0.0-20200423195709-147f4cafe1e5

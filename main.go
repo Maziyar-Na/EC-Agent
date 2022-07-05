@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	dgrpc "github.com/Maziyar-Na/EC-Agent/DeployGRPC"
 	pbController "github.com/Maziyar-Na/EC-Agent/containerUpdateGrpc"
 	pbDeployer "github.com/Maziyar-Na/EC-Agent/grpc"
 	"google.golang.org/grpc"
@@ -17,11 +18,19 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
+	//"golang.org/x/net/context"
+	//
+	//"github.com/docker/docker/api/client/inspect"
+	//Cli "github.com/docker/docker/cli"
+	//flag "github.com/docker/docker/pkg/mflag"
+	//"github.com/docker/engine-api/client"
 )
 
 //const TcpPort = ":4445"
 const PortGrpcDeployer = ":4446"
 const PortGrpcController =":4448"
+var BaseGcmGrpcPort = 4447 //app1 gets 4447, app2 gets 4448, ..., appN gets 4447 + appN - 1
 const BuffSize = 2048
 const EcConnectSyscall = 335
 const ResizeMemSyscall = 336
@@ -32,8 +41,9 @@ const BaseUdpPort = 6000
 const ReadMemUsageSyscall = 341
 const ReadMemLimitSyscall = 342
 
-//const INTERFACE = "enp0s3"
-const INTERFACE = "enp94s0f0"
+const INTERFACE = "escra"
+
+var containerNamesSet = make(map[string]bool)
 
 type grpcDeployerServer struct {
 	pbDeployer.UnimplementedHandlerServer
@@ -101,7 +111,7 @@ func RunConnectContainer(gcmIpStr string, dockerId string, pid int, appNum int32
 
 // ReqContainerInfo implements agent.HandlerServer
 func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDeployer.ConnectContainerRequest) (*pbDeployer.ConnectContainerReply, error) {
-	log.Printf("Received: %v, %v, %v, %d", in.GetGcmIP(), in.GetPodName(), in.GetDockerId(), in.GetAppNum())
+	log.Printf("Rx connect container: %v, %v, %v, %d", in.GetGcmIP(), in.GetPodName(), in.GetDockerId(), in.GetAppNum())
 	pid, ret, err := GetDockerPid(in.GetDockerId())
 	cgroupId := int32(0)
 	if ret != 0 {
@@ -126,6 +136,108 @@ func (s *grpcDeployerServer) ReqConnectContainer(ctx context.Context, in *pbDepl
 		DockerID: in.GetDockerId(),
 		CgroupID: cgroupId,
 	}, nil
+}
+
+func (s*grpcDeployerServer) ReqTriggerAgentWatcher(ctx context.Context, in *pbDeployer.TriggerPodDeploymentWatcherRequest) (*pbDeployer.TriggerPodDeploymentWatcherReply, error) {
+	fmt.Println("ReqTriggerAgentWatcher rx: (gcmip, ns, appcount): (" + in.GetGcmIP(), in.GetAgentIP(), in.GetNamespace(), in.GetAppCount)
+
+	go AgentWatcher(in.GetGcmIP(), in.GetAgentIP(), in.GetNamespace(), in.GetAppCount())
+
+	return &pbDeployer.TriggerPodDeploymentWatcherReply{
+		ReturnStatus: 0,
+	}, nil
+}
+
+//TODO: going to have to deal with issue here maybe when containers are deleted.
+func AgentWatcher(gcmIP string, agentIP string, namespace string, appNum int32) {
+	flag := true
+	for {
+		cmd := "sudo docker inspect -f '{{.Name}}' $(sudo docker ps -qf \"name=_" + namespace + "_\")"
+		out, err := exec.Command("/bin/sh", "-c", cmd).Output()
+		if err != nil {
+			if len(containerNamesSet) != 0 {
+				fmt.Println("unable to get dockerIDs in " + namespace + ": " + err.Error())
+				time.Sleep(5 * time.Second)
+			} else if flag {
+				fmt.Println("waiting for containers...")
+				flag = !flag
+			}
+			time.Sleep(10 * time.Millisecond)
+			continue
+		}
+
+		containers := string(out)
+		containers = strings.TrimSuffix(containers, "\n")
+		container_list := strings.Split(containers, "\n")
+		for _, container := range container_list {
+			if strings.Contains(container, "_POD_") {
+				continue
+			}
+			_, ok := containerNamesSet[container] //check if container already in map (also will have been sysconnected)
+			if !ok {
+				containerNamesSet[container] = true //add container to map. now we need to run sysconnect
+				pid, ret, err := GetDockerPid(container)
+				if ret != 0 {
+					log.Println("Error getting docker pid for container in AgentWatcher: " + container + ", Err: " + err)
+				} else {
+					fmt.Println("new container (pid, container): (" + strconv.Itoa(pid) + ", " + container + ")")
+					cmd := "sudo docker ps -qf \"name=" + container + "\""
+					out, err := exec.Command("/bin/sh", "-c", cmd).Output()
+					if err != nil {
+						fmt.Println("Failed to get docker id fro m")
+					}
+					docker_id := string(out)
+					docker_id = strings.TrimSuffix(docker_id, "\n")
+					_, cgId, val := RunConnectContainer(gcmIP, docker_id, pid, appNum)
+					if val != 0 {
+						log.Println("Error getting docker pid for container: " + docker_id)
+						log.Println()
+					}
+					fmt.Print(pid)
+					if int(cgId) == -1 {
+						fmt.Println("ERROR IN REQCONNECT CONTAINER. Rx back cgroupID: -1")
+					} else {
+						fmt.Println("connected container to controller! woo!")
+					}
+					exportDeployPodSpec(agentIP, gcmIP, docker_id, cgId, appNum)
+
+				}
+			}
+		}
+		//fmt.Println("Get namespace containers: " + containers)
+		time.Sleep(100 * time.Millisecond)
+	}
+
+}
+
+func exportDeployPodSpec(nodeIP string, gcmIP string, dockerID string, cgroupId int32, appCount int32) {
+	fmt.Println("Export pod Spec from cgID: " + strconv.Itoa(int(cgroupId)))
+	var gcm_addr = gcmIP + ":" + strconv.Itoa(BaseGcmGrpcPort + (int(appCount) - 1))
+	//conn, err := grpc.Dial( gcmIP + GCM_GRPC_PORT, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial( gcm_addr, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := dgrpc.NewDeployerExportClient(conn)
+
+	txMsg := &dgrpc.ExportPodSpec{
+		DockerId: dockerID,
+		CgroupId: cgroupId,
+		NodeIp: nodeIP,
+	}
+
+	fmt.Println(txMsg)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	r, err := c.ReportPodSpec(ctx, txMsg)
+	if err != nil {
+		log.Fatalf("could not ExportPodSpec: %v", err)
+	}
+	log.Println("Rx back from gcm: ", r.GetDockerId(), r.GetCgroupId(), r.GetNodeIp(), r.GetThanks())
+
 }
 
 func (s *grpcControllerServer) ReqQuotaUpdate(ctx context.Context, in *pbController.ContainerQuotaRequest) (*pbController.ContainerQuotaReply, error) {
@@ -153,7 +265,9 @@ func (s *grpcControllerServer) ReqQuotaUpdate(ctx context.Context, in *pbControl
 	//Which cgroup to update first is clear now -> let's do it
 	ret, _, _ := syscall.Syscall(ResizeQuotaSyscall, uintptr(fistCgroupToUpdate), uintptr(quotaMega), 0)
 	if ret == 1 {
-		log.Println("[Error] Quota Set Failed at the first level!")
+		log.Println("[Error] Quota Set Failed at the first level! setting quota high for pod restart")
+		ret, _, _ := syscall.Syscall(ResizeQuotaSyscall, uintptr(fistCgroupToUpdate), uintptr(1000000), 0)
+		ret, _, _ = syscall.Syscall(ResizeQuotaSyscall, uintptr(secondCgroupToUpdate), uintptr(1000000), 0)
 		ret = 1
 		updatedQuota = 0
 		//return updatedQuota, uint64(ret)
@@ -212,6 +326,12 @@ func (s *grpcControllerServer) ReqResizeMaxMem(ctx context.Context, in *pbContro
 
 	if err != 0 {
 		log.Printf("[INFO]: EC Agent: resize_max_mem fails in first level. Ret: %d \n", err)
+		log.Println("update quotas pods")
+		ret, _, _ := syscall.Syscall(ResizeQuotaSyscall, uintptr(fistCgroupToUpdate), uintptr(1000000), 0)
+		log.Printf("ret val on first syscall: %d\n", ret)
+		ret, _, _ = syscall.Syscall(ResizeQuotaSyscall, uintptr(secondCgroupToUpdate), uintptr(1000000), 0)
+		log.Printf("ret val on second syscall: %d\n", ret)
+
 		//return err
 		return &pbController.ResizeMaxMemReply{
 			CgroupId:  in.GetCgroupId(),

@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type HandlerClient interface {
 	// Sends a greeting
 	ReqConnectContainer(ctx context.Context, in *ConnectContainerRequest, opts ...grpc.CallOption) (*ConnectContainerReply, error)
+	ReqTriggerAgentWatcher(ctx context.Context, in *TriggerPodDeploymentWatcherRequest, opts ...grpc.CallOption) (*TriggerPodDeploymentWatcherReply, error)
 }
 
 type handlerClient struct {
@@ -39,12 +40,22 @@ func (c *handlerClient) ReqConnectContainer(ctx context.Context, in *ConnectCont
 	return out, nil
 }
 
+func (c *handlerClient) ReqTriggerAgentWatcher(ctx context.Context, in *TriggerPodDeploymentWatcherRequest, opts ...grpc.CallOption) (*TriggerPodDeploymentWatcherReply, error) {
+	out := new(TriggerPodDeploymentWatcherReply)
+	err := c.cc.Invoke(ctx, "/agentcomm.Handler/ReqTriggerAgentWatcher", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HandlerServer is the server API for Handler service.
 // All implementations must embed UnimplementedHandlerServer
 // for forward compatibility
 type HandlerServer interface {
 	// Sends a greeting
 	ReqConnectContainer(context.Context, *ConnectContainerRequest) (*ConnectContainerReply, error)
+	ReqTriggerAgentWatcher(context.Context, *TriggerPodDeploymentWatcherRequest) (*TriggerPodDeploymentWatcherReply, error)
 	mustEmbedUnimplementedHandlerServer()
 }
 
@@ -54,6 +65,9 @@ type UnimplementedHandlerServer struct {
 
 func (UnimplementedHandlerServer) ReqConnectContainer(context.Context, *ConnectContainerRequest) (*ConnectContainerReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReqConnectContainer not implemented")
+}
+func (UnimplementedHandlerServer) ReqTriggerAgentWatcher(context.Context, *TriggerPodDeploymentWatcherRequest) (*TriggerPodDeploymentWatcherReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReqTriggerAgentWatcher not implemented")
 }
 func (UnimplementedHandlerServer) mustEmbedUnimplementedHandlerServer() {}
 
@@ -86,6 +100,24 @@ func _Handler_ReqConnectContainer_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Handler_ReqTriggerAgentWatcher_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TriggerPodDeploymentWatcherRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HandlerServer).ReqTriggerAgentWatcher(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/agentcomm.Handler/ReqTriggerAgentWatcher",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HandlerServer).ReqTriggerAgentWatcher(ctx, req.(*TriggerPodDeploymentWatcherRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Handler_ServiceDesc is the grpc.ServiceDesc for Handler service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -96,6 +128,10 @@ var Handler_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReqConnectContainer",
 			Handler:    _Handler_ReqConnectContainer_Handler,
+		},
+		{
+			MethodName: "ReqTriggerAgentWatcher",
+			Handler:    _Handler_ReqTriggerAgentWatcher_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
